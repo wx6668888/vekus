@@ -27,6 +27,11 @@
 
       <div v-if="loading" class="admin-view__loading"><div class="vk-skeleton-row" v-for="i in 4" :key="i"></div></div>
 
+      <div v-else-if="flatList.length === 0 && !loading" style="text-align:center;padding:60px;color:var(--text-muted)">
+        <p style="font-size:18px;margin-bottom:8px">暂无物料数据</p>
+        <Button variant="primary" @click="openCreate(0,0,'组件')">新增第一个物料</Button>
+      </div>
+
       <!-- Tree view -->
       <Card v-else-if="viewMode === 'tree'" class="bom-view__table">
         <div v-for="item in treeItems" :key="item.id">
@@ -166,7 +171,7 @@ const expanded = ref(new Set<string>());
 const loading = ref(true);
 const showDialog = ref(false);
 const editingItem = ref<BomNode | null>(null);
-const viewMode = ref<'tree' | 'flat'>('tree');
+const viewMode = ref<'tree' | 'flat'>('flat');
 const newParentId = ref(0);
 const newLevel = ref(0);
 const newCategory = ref('零件');
