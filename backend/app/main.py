@@ -1299,12 +1299,24 @@ def qichacha_risk_scan(searchKey: str = "", customerId: int = 0):
             headers=headers, params=params, timeout=30,
         )
         data = resp.json()
+        scan_time = now_str()
         if data.get("Status") == "200" and data.get("Result", {}).get("VerifyResult") == 1:
-            return {"ok": True, "data": data["Result"]["Data"]}
+            result_data = data["Result"]["Data"]
+            # Save to customer record
+            if customerId > 0:
+                with SessionLocal() as db:
+                    cust = db.get(Customer, customerId)
+                    if cust:
+                        ext = json.loads(cust.ext_info) if cust.ext_info else {}
+                        ext["riskResult"] = result_data
+                        ext["riskScanTime"] = scan_time
+                        cust.ext_info = json.dumps(ext, ensure_ascii=False)
+                        db.commit()
+            return {"ok": True, "data": result_data, "scanTime": scan_time}
         else:
-            return {"ok": False, "message": data.get("Message", "未找到风险数据"), "data": None}
+            return {"ok": False, "message": data.get("Message", "未找到风险数据"), "data": None, "scanTime": scan_time}
     except Exception as e:
-        return {"ok": False, "message": str(e)[:200], "data": None}
+        return {"ok": False, "message": str(e)[:200], "data": None, "scanTime": None}
 
 
 # ═══════════════════ BOM 物料清单 ═══════════════════

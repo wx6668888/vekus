@@ -56,8 +56,9 @@
               <span class="cust-detail__risk-cost">20 点/次</span>
             </div>
             <Button variant="primary" :loading="scanning" :disabled="scanning" @click="doRiskScan">
-              <ShieldAlert :size="16" class="mr-2" /> 风险排查
+              <ShieldAlert :size="16" class="mr-2" /> {{ riskResult ? '重新排查' : '风险排查' }}
             </Button>
+            <span v-if="lastScanTime" class="cust-detail__scan-time">上次排查: {{ lastScanTime }}</span>
           </div>
         </Card>
 
@@ -262,6 +263,7 @@ const drawings = ref<any[]>([]);
 const loading = ref(true);
 const scanning = ref(false);
 const riskResult = ref<any>(null);
+const lastScanTime = ref('');
 
 const riskCategories = [
   { key: 'ShiXin', label: '失信被执行', cls: 'text-danger' },
@@ -304,6 +306,7 @@ async function doRiskScan() {
     const res = await api.get<any>(`/qichacha/risk-scan?searchKey=${encodeURIComponent(name)}&customerId=${customer.value.id}`);
     if (res.data?.ok && res.data?.data) {
       riskResult.value = res.data.data;
+      lastScanTime.value = res.data.scanTime ? formatScanTime(res.data.scanTime) : formatScanTime(new Date().toISOString());
     } else {
       alert(res.data?.message || '排查失败，请稍后重试');
     }
@@ -311,10 +314,22 @@ async function doRiskScan() {
   finally { scanning.value = false; }
 }
 
+function formatScanTime(t: string) {
+  if (!t) return '';
+  return t.slice(0, 16).replace('T', ' ');
+}
+
 onMounted(async () => {
   const id = route.params.id as string;
   const r1 = await api.get<any>('/customers/' + id);
-  if (r1.data) customer.value = r1.data;
+  if (r1.data) {
+    customer.value = r1.data;
+    // Load cached risk scan result
+    if (r1.data.extInfo?.riskResult) {
+      riskResult.value = r1.data.extInfo.riskResult;
+      lastScanTime.value = formatScanTime(r1.data.extInfo.riskScanTime || '');
+    }
+  }
   const r2 = await api.get<any[]>('/quotes');
   if (r2.data) quotes.value = r2.data.filter((q: any) => q.customerName === customer.value?.name);
   if (r2.data) {
@@ -353,6 +368,7 @@ onMounted(async () => {
 .cust-detail__risk-title { font-size: var(--fz-h3); font-weight: var(--fw-semibold); margin: 0 0 4px; }
 .cust-detail__risk-desc { font-size: var(--fz-sm); color: var(--text-muted); margin: 0 0 6px; max-width: 440px; }
 .cust-detail__risk-cost { font-size: var(--fz-xs); color: var(--accent); font-weight: var(--fw-semibold); }
+.cust-detail__scan-time { font-size: var(--fz-xs); color: var(--text-faint); margin-left: 12px; }
 
 /* Risk results */
 .cust-detail__card--risk { border-left: 3px solid var(--danger); }
