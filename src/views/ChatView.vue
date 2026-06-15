@@ -31,32 +31,41 @@
             {{ msg.content }}
           </div>
           <template v-else>
-            <div class="chat-view__bubble-content">{{ msg.content }}</div>
+            <img
+              v-if="msg.messageType === 'image'"
+              :src="msg.content"
+              class="chat-view__bubble-img"
+              @click="previewImage = msg.content"
+            />
+            <div v-else class="chat-view__bubble-content">{{ msg.content }}</div>
             <div class="chat-view__bubble-time">{{ formatTime(msg.createdAt) }}</div>
           </template>
         </div>
       </div>
 
       <div class="chat-view__input-bar">
-        <input
-          v-model="inputText"
-          class="chat-view__input"
-          placeholder="输入消息..."
-          @keydown.enter="sendMsg"
+        <ChatInput
+          placeholder="输入消息... Enter 发送"
+          accept="image/*,.pdf,.xlsx,.docx"
+          :max-file-size="8"
+          @submit="onSend"
         />
-        <button class="chat-view__send-btn" :disabled="!inputText.trim()" @click="sendMsg">
-          <Send :size="20" />
-        </button>
       </div>
     </main>
+
+    <!-- Image lightbox -->
+    <div v-if="previewImage" class="chat-view__img-overlay" @click="previewImage = ''">
+      <img :src="previewImage" />
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, nextTick, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
-import { ChevronLeft, Send, Sparkles } from 'lucide-vue-next';
+import { ChevronLeft, Sparkles } from 'lucide-vue-next';
 import Sidebar from '@/components/layout/Sidebar.vue';
+import ChatInput from '@/components/chat/ChatInput.vue';
 import { getMessages, sendMessage, markRead, type Message, type Conversation, getConversations } from '@/api/messages';
 import { askCustomerService } from '@/api/ai';
 
@@ -70,6 +79,7 @@ const inputText = ref('');
 const loading = ref(true);
 const aiThinking = ref(false);
 const msgContainer = ref<HTMLElement | null>(null);
+const previewImage = ref('');
 let pollTimer: ReturnType<typeof setInterval> | null = null;
 
 onMounted(async () => {
@@ -102,17 +112,34 @@ function scrollToBottom() {
   }
 }
 
-async function sendMsg() {
-  const text = inputText.value.trim();
-  if (!text) return;
+async function onSend(text: string, file?: File) {
+  let content = text;
+  let messageType = 'text';
+
+  // Handle file: convert to base64 preview for images, or attach file name
+  if (file) {
+    if (file.type.startsWith('image/')) {
+      messageType = 'image';
+      // Convert image to base64 for display
+      const reader = new FileReader();
+      const base64Promise = new Promise<string>((resolve) => {
+        reader.onload = () => resolve(reader.result as string);
+      });
+      reader.readAsDataURL(file);
+      content = await base64Promise;
+    } else {
+      content = text ? `${text}\n[附件: ${file.name}]` : `[附件: ${file.name}]`;
+    }
+  }
+  if (!content) return;
   inputText.value = '';
 
   // Send user message
   await sendMessage({
     conversationId,
     senderId: myId,
-    content: text,
-    messageType: 'text',
+    content,
+    messageType,
   });
 
   await fetchMessages();
@@ -120,9 +147,9 @@ async function sendMsg() {
   // Auto-reply from AI if customer service
   if (convType.value === 'customer_service') {
     aiThinking.value = true;
-    await fetchMessages(); // refresh to show "thinking" state
+    await fetchMessages();
     try {
-      const response = await askCustomerService(text);
+      const response = await askCustomerService(text || '请帮我查看这个文件');
       await sendMessage({
         conversationId,
         senderId: 0,
@@ -249,44 +276,40 @@ function formatTime(dateStr: string): string {
 }
 
 .chat-view__input-bar {
-  display: flex;
-  gap: 10px;
-  padding: 14px 20px;
+  padding: 0 20px 4px;
   border-top: 1px solid var(--border);
   background: var(--surface);
 }
 
-.chat-view__input {
-  flex: 1;
-  height: 44px;
-  padding: 0 16px;
-  border-radius: 22px;
+/* Image bubble */
+.chat-view__bubble-img {
+  max-width: 240px;
+  max-height: 320px;
+  border-radius: 14px;
+  cursor: pointer;
+  object-fit: cover;
   border: 1px solid var(--border);
-  background: var(--surface-sunken);
-  font-size: var(--fz-body);
-  outline: none;
+  transition: transform 0.15s;
+}
+.chat-view__bubble-img:hover { transform: scale(1.02); }
+.chat-view__bubble--mine .chat-view__bubble-img {
+  border-radius: 14px 14px 4px 14px;
 }
 
-.chat-view__input:focus {
-  border-color: var(--brand);
-}
-
-.chat-view__send-btn {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  border: none;
-  background: var(--brand);
-  color: white;
+/* Image preview overlay */
+.chat-view__img-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
   display: grid;
   place-items: center;
+  z-index: 9999;
   cursor: pointer;
-  transition: opacity var(--duration-fast);
 }
-
-.chat-view__send-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
+.chat-view__img-overlay img {
+  max-width: 90vw;
+  max-height: 90vh;
+  border-radius: 12px;
 }
 
 .chat-view__ai-badge {
