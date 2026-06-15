@@ -61,135 +61,130 @@
           </div>
         </Card>
 
-        <!-- Risk results -->
-        <Card v-if="riskResult" class="cust-detail__card cust-detail__card--risk">
-          <h3 class="cust-detail__section-title">风险排查结果 — {{ riskResult.Name || customer.name }}</h3>
+        <!-- Risk results — full display -->
+        <template v-if="riskResult">
+          <!-- Enterprise overview -->
+          <Card class="cust-detail__card">
+            <h3 class="cust-detail__section-title">企业概览 — {{ riskResult.Name || customer.name }}</h3>
+            <div class="cust-detail__info-grid">
+              <div><span>企业名称</span><strong>{{ riskResult.Name }}</strong></div>
+              <div><span>法定代表人</span><strong>{{ riskResult.OperName || '-' }}</strong></div>
+              <div><span>成立日期</span><strong>{{ riskResult.StartDate || '-' }}</strong></div>
+              <div><span>经营状态</span><strong>{{ riskResult.Status || '-' }}</strong></div>
+              <div><span>注册资本</span><strong>{{ riskResult.RegistCapi || riskResult.RegisteredCapital || '-' }}{{ riskResult.RegisteredCapitalUnit || '' }}</strong></div>
+              <div v-if="riskResult.RealCapi"><span>实缴资本</span><strong>{{ riskResult.RealCapi }}</strong></div>
+              <div><span>统一社会信用代码</span><strong class="vk-font-mono">{{ riskResult.CreditCode || '-' }}</strong></div>
+              <div v-if="riskResult.No"><span>注册号</span><strong class="vk-font-mono">{{ riskResult.No }}</strong></div>
+              <div v-if="riskResult.TaxNo"><span>纳税人识别号</span><strong class="vk-font-mono">{{ riskResult.TaxNo }}</strong></div>
+              <div v-if="riskResult.OrgNo"><span>组织机构代码</span><strong class="vk-font-mono">{{ riskResult.OrgNo }}</strong></div>
+              <div v-if="riskResult.EconKind"><span>企业类型</span><strong>{{ riskResult.EconKind }}</strong></div>
+              <div v-if="riskResult.TermStart"><span>营业期限</span><strong>{{ riskResult.TermStart }} ~ {{ riskResult.TermEnd || '-' }}</strong></div>
+              <div v-if="riskResult.TaxpayerType"><span>纳税人资质</span><strong>{{ riskResult.TaxpayerType }}</strong></div>
+              <div v-if="riskResult.PersonScope"><span>人员规模</span><strong>{{ riskResult.PersonScope }}</strong></div>
+              <div v-if="riskResult.InsuredCount"><span>参保人数</span><strong>{{ riskResult.InsuredCount }}</strong></div>
+              <div v-if="riskResult.Scale"><span>企业规模</span><strong>{{ riskResult.Scale }}</strong></div>
+              <div v-if="riskResult.IsSmall !== undefined"><span>小微企业</span><strong>{{ riskResult.IsSmall === '1' ? '是' : '否' }}</strong></div>
+              <div v-if="riskResult.BelongOrg"><span>登记机关</span><strong>{{ riskResult.BelongOrg }}</strong></div>
+              <div v-if="riskResult.CheckDate"><span>核准日期</span><strong>{{ riskResult.CheckDate }}</strong></div>
+              <div v-if="riskResult.Area" class="cust-detail__full-width"><span>所属地区</span><strong>{{ riskResult.Area.Province || '' }} {{ riskResult.Area.City || '' }} {{ riskResult.Area.County || '' }}</strong></div>
+              <div v-if="riskResult.Industry" class="cust-detail__full-width"><span>国标行业</span><strong>{{ riskResult.Industry.Industry || '' }} > {{ riskResult.Industry.SubIndustry || '' }} > {{ riskResult.Industry.MiddleCategory || '' }}</strong></div>
+              <div v-if="riskResult.Address" class="cust-detail__full-width"><span>注册地址</span><strong>{{ riskResult.Address }}</strong></div>
+              <div v-if="riskResult.Scope" class="cust-detail__full-width"><span>经营范围</span><strong class="cust-detail__scope-text">{{ riskResult.Scope }}</strong></div>
+              <div v-if="riskResult.EnglishName"><span>英文名</span><strong>{{ riskResult.EnglishName }}</strong></div>
+            </div>
+          </Card>
 
-          <!-- Risk summary — always show all categories -->
-          <div class="cust-detail__risk-summary">
-            <div class="cust-detail__risk-stat">
-              <span :class="['cust-detail__risk-val', (riskResult.ShiXin?.TotalCount || 0) > 0 ? 'text-danger' : 'text-muted']">{{ riskResult.ShiXin?.TotalCount || 0 }}</span>
-              <span>失信被执行</span>
+          <!-- Contact & Bank -->
+          <Card v-if="riskResult.ContactInfo || riskResult.BankInfo" class="cust-detail__card">
+            <h3 class="cust-detail__section-title">联系与开票信息</h3>
+            <div class="cust-detail__info-grid">
+              <div v-if="riskResult.ContactInfo?.Tel"><span>联系电话</span><strong>{{ riskResult.ContactInfo.Tel }}</strong></div>
+              <div v-if="riskResult.ContactInfo?.Email"><span>邮箱</span><strong>{{ riskResult.ContactInfo.Email }}</strong></div>
+              <div v-if="riskResult.ContactInfo?.WebSiteList?.length" class="cust-detail__full-width"><span>网址</span><strong>{{ riskResult.ContactInfo.WebSiteList.join('、') }}</strong></div>
+              <div v-if="riskResult.BankInfo?.Bank"><span>开户行</span><strong>{{ riskResult.BankInfo.Bank }}</strong></div>
+              <div v-if="riskResult.BankInfo?.BankAccount"><span>银行账号</span><strong class="vk-font-mono">{{ riskResult.BankInfo.BankAccount }}</strong></div>
             </div>
-            <div class="cust-detail__risk-stat">
-              <span :class="['cust-detail__risk-val', (riskResult.ZhiXing?.TotalCount || 0) > 0 ? 'text-warn' : 'text-muted']">{{ riskResult.ZhiXing?.TotalCount || 0 }}</span>
-              <span>被执行</span>
-            </div>
-            <div class="cust-detail__risk-stat">
-              <span :class="['cust-detail__risk-val', (riskResult.AdminPenalty?.TotalCount || 0) > 0 ? 'text-warn' : 'text-muted']">{{ riskResult.AdminPenalty?.TotalCount || 0 }}</span>
-              <span>行政处罚</span>
-            </div>
-            <div class="cust-detail__risk-stat">
-              <span :class="['cust-detail__risk-val', (riskResult.Exception?.TotalCount || 0) > 0 ? 'text-warn' : 'text-muted']">{{ riskResult.Exception?.TotalCount || 0 }}</span>
-              <span>经营异常</span>
-            </div>
-            <div class="cust-detail__risk-stat">
-              <span :class="['cust-detail__risk-val', (riskResult.Sumptuary?.TotalCount || 0) > 0 ? 'text-danger' : 'text-muted']">{{ riskResult.Sumptuary?.TotalCount || 0 }}</span>
-              <span>限制高消费</span>
-            </div>
-            <div class="cust-detail__risk-stat">
-              <span :class="['cust-detail__risk-val', (riskResult.EquityFreeze?.TotalCount || 0) > 0 ? 'text-warn' : 'text-muted']">{{ riskResult.EquityFreeze?.TotalCount || 0 }}</span>
-              <span>股权冻结</span>
-            </div>
-            <div class="cust-detail__risk-stat">
-              <span :class="['cust-detail__risk-val', (riskResult.Bankruptcy?.TotalCount || 0) > 0 ? 'text-warn' : 'text-muted']">{{ riskResult.Bankruptcy?.TotalCount || 0 }}</span>
-              <span>破产重整</span>
-            </div>
-            <div class="cust-detail__risk-stat">
-              <span :class="['cust-detail__risk-val', (riskResult.TaxIllegal?.TotalCount || 0) > 0 ? 'text-warn' : 'text-muted']">{{ riskResult.TaxIllegal?.TotalCount || 0 }}</span>
-              <span>税收违法</span>
-            </div>
-            <div class="cust-detail__risk-stat">
-              <span :class="['cust-detail__risk-val', (riskResult.EnvPunishment?.TotalCount || 0) > 0 ? 'text-warn' : 'text-muted']">{{ riskResult.EnvPunishment?.TotalCount || 0 }}</span>
-              <span>环保处罚</span>
-            </div>
-            <div class="cust-detail__risk-stat">
-              <span :class="['cust-detail__risk-val', (riskResult.SeriousIllegal?.TotalCount || 0) > 0 ? 'text-danger' : 'text-muted']">{{ riskResult.SeriousIllegal?.TotalCount || 0 }}</span>
-              <span>严重违法</span>
-            </div>
-            <div class="cust-detail__risk-stat">
-              <span :class="['cust-detail__risk-val', (riskResult.TaxOweNotice?.TotalCount || 0) > 0 ? 'text-warn' : 'text-muted']">{{ riskResult.TaxOweNotice?.TotalCount || 0 }}</span>
-              <span>欠税公告</span>
-            </div>
-            <div class="cust-detail__risk-stat">
-              <span :class="['cust-detail__risk-val', (riskResult.JudicialSale?.TotalCount || 0) > 0 ? 'text-warn' : 'text-muted']">{{ riskResult.JudicialSale?.TotalCount || 0 }}</span>
-              <span>司法拍卖</span>
-            </div>
-          </div>
+          </Card>
 
-          <!-- Detail sections for each risk type -->
-          <div v-if="riskResult.ShiXin?.DataList?.length" class="cust-detail__risk-block">
-            <h4 class="cust-detail__risk-block-title">失信被执行人 ({{ riskResult.ShiXin.TotalCount }}条，涉案{{ riskResult.ShiXin.TotalAmount || 0 }}万元)</h4>
-            <div v-for="(item, i) in riskResult.ShiXin.DataList.slice(0,3)" :key="'sx'+i" class="cust-detail__risk-item">
-              <strong>{{ item.CaseNo }}</strong>
-              <span>{{ item.ExecuteCourt }} · {{ item.Amount }}元</span>
-              <span class="text-danger">{{ item.ExecuteStatus }}</span>
+          <!-- Shareholders -->
+          <Card v-if="riskResult.PartnerList?.length" class="cust-detail__card">
+            <h3 class="cust-detail__section-title">工商登记股东 (前{{ riskResult.PartnerList.length }}位)</h3>
+            <div v-for="(p, i) in riskResult.PartnerList.slice(0,10)" :key="'p'+i" class="cust-detail__risk-item">
+              <strong>{{ p.StockName }}</strong>
+              <span>{{ p.StockType }} · 持股 {{ p.StockPercent || '-' }} · 认缴 {{ p.ShouldCapi || '-' }}{{ p.SubscribedCapitalUnit || '' }}</span>
             </div>
-          </div>
+          </Card>
 
-          <div v-if="riskResult.ZhiXing?.DataList?.length" class="cust-detail__risk-block">
-            <h4 class="cust-detail__risk-block-title">被执行人 ({{ riskResult.ZhiXing.TotalCount }}条，{{ riskResult.ZhiXing.TotalAmount || 0 }}万元)</h4>
-            <div v-for="(item, i) in riskResult.ZhiXing.DataList.slice(0,3)" :key="'zx'+i" class="cust-detail__risk-item">
-              <strong>{{ item.CaseNo }}</strong>
-              <span>{{ item.ExecuteCourt }} · {{ item.BiaoDi }}元</span>
+          <!-- Key Personnel -->
+          <Card v-if="riskResult.EmployeeList?.length" class="cust-detail__card">
+            <h3 class="cust-detail__section-title">主要人员</h3>
+            <div class="cust-detail__tags">
+              <span v-for="(e, i) in riskResult.EmployeeList.slice(0,15)" :key="'e'+i" class="vk-tag">{{ e.Name }} · {{ e.Job || '-' }}</span>
             </div>
-          </div>
+          </Card>
 
-          <div v-if="riskResult.AdminPenalty?.DataList?.length" class="cust-detail__risk-block">
-            <h4 class="cust-detail__risk-block-title">行政处罚 ({{ riskResult.AdminPenalty.TotalCount }}条，罚款{{ riskResult.AdminPenalty.TotalAmount || 0 }}万元)</h4>
-            <div v-for="(item, i) in riskResult.AdminPenalty.DataList.slice(0,3)" :key="'ap'+i" class="cust-detail__risk-item">
-              <strong>{{ item.DocNo }}</strong>
-              <span>{{ item.PunishOffice }}</span>
-              <span class="text-warn">罚款{{ item.PunishAmt }}元</span>
+          <!-- Branches & Investments -->
+          <Card v-if="riskResult.BranchList?.length || riskResult.InvestmentList?.length" class="cust-detail__card">
+            <h3 class="cust-detail__section-title">分支机构与对外投资</h3>
+            <div v-if="riskResult.BranchList?.length"><span class="cust-detail__risk-block-title">分支机构 ({{ riskResult.BranchList.length }})</span>
+              <div v-for="(b, i) in riskResult.BranchList.slice(0,5)" :key="'br'+i" class="cust-detail__risk-item">{{ b.Name }} · {{ b.OperName || '-' }} · {{ b.Status || '-' }}</div>
             </div>
-          </div>
+            <div v-if="riskResult.InvestmentList?.length" style="margin-top:12px"><span class="cust-detail__risk-block-title">对外投资 ({{ riskResult.InvestmentList.length }})</span>
+              <div v-for="(iv, i) in riskResult.InvestmentList.slice(0,5)" :key="'iv'+i" class="cust-detail__risk-item">{{ iv.Name }} · 持股 {{ iv.FundedRatio || '-' }} · {{ iv.Status || '-' }}</div>
+            </div>
+          </Card>
 
-          <div v-if="riskResult.Exception?.DataList?.length" class="cust-detail__risk-block">
-            <h4 class="cust-detail__risk-block-title">经营异常 ({{ riskResult.Exception.TotalCount }}条)</h4>
-            <div v-for="(item, i) in riskResult.Exception.DataList.slice(0,3)" :key="'ex'+i" class="cust-detail__risk-item">
-              <span>{{ item.AddDate }} · {{ item.AddOffice }}</span>
-              <span>{{ item.AddReason }}</span>
+          <!-- Parent / Group / Controllers -->
+          <Card v-if="riskResult.Parent || riskResult.GroupInfo || riskResult.ActualControllerList?.length || riskResult.BeneficiaryList?.length" class="cust-detail__card">
+            <h3 class="cust-detail__section-title">控制关系</h3>
+            <div class="cust-detail__info-grid">
+              <div v-if="riskResult.Parent"><span>总公司</span><strong>{{ riskResult.Parent.Name }}</strong></div>
+              <div v-if="riskResult.GroupInfo"><span>所属集团</span><strong>{{ riskResult.GroupInfo.Name }}</strong></div>
+              <div v-if="riskResult.ActualControllerList?.length"><span>实际控制人</span><strong>{{ riskResult.ActualControllerList.map((a:any)=>a.Name+'('+a.FinalBenefitPercent+')').join('、') }}</strong></div>
+              <div v-if="riskResult.BeneficiaryList?.length"><span>受益所有人</span><strong>{{ riskResult.BeneficiaryList.map((a:any)=>a.Name+'('+a.FinalBenefitPercent+')').join('、') }}</strong></div>
             </div>
-          </div>
+          </Card>
 
-          <div v-if="riskResult.Sumptuary?.DataList?.length" class="cust-detail__risk-block">
-            <h4 class="cust-detail__risk-block-title">限制高消费 ({{ riskResult.Sumptuary.TotalCount }}条，涉案{{ riskResult.Sumptuary.TotalAmount || 0 }}万元)</h4>
-            <div v-for="(item, i) in riskResult.Sumptuary.DataList.slice(0,3)" :key="'sp'+i" class="cust-detail__risk-item">
-              <strong>{{ item.CaseNo }}</strong>
-              <span>{{ item.CompanyName }} · {{ item.Amount }}元</span>
+          <!-- ====== RISK SECTION ====== -->
+          <Card class="cust-detail__card cust-detail__card--risk">
+            <h3 class="cust-detail__section-title">风险总览</h3>
+            <div class="cust-detail__risk-summary">
+              <div class="cust-detail__risk-stat" v-for="r in riskCategories" :key="r.key">
+                <span :class="['cust-detail__risk-val', (riskResult[r.key]?.TotalCount || 0) > 0 ? r.cls : 'text-muted']">{{ riskResult[r.key]?.TotalCount || 0 }}</span>
+                <span>{{ r.label }}</span>
+              </div>
             </div>
-          </div>
 
-          <div v-if="riskResult.EquityFreeze?.DataList?.length" class="cust-detail__risk-block">
-            <h4 class="cust-detail__risk-block-title">股权冻结 ({{ riskResult.EquityFreeze.TotalCount }}条)</h4>
-            <div v-for="(item, i) in riskResult.EquityFreeze.DataList.slice(0,3)" :key="'ef'+i" class="cust-detail__risk-item">
-              <strong>{{ item.DocNo }}</strong>
-              <span>{{ item.FreezeCompany }} · {{ item.EquityAmount }}</span>
-            </div>
-          </div>
+            <!-- Each risk detail -->
+            <template v-for="r in riskCategories" :key="'rd-'+r.key">
+              <div v-if="riskResult[r.key]?.DataList?.length" class="cust-detail__risk-block">
+                <h4 class="cust-detail__risk-block-title">{{ r.label }} ({{ riskResult[r.key].TotalCount }}条<span v-if="riskResult[r.key].TotalAmount">，涉案/罚款 {{ riskResult[r.key].TotalAmount }}万元</span>)</h4>
+                <div v-for="(item, i) in riskResult[r.key].DataList.slice(0,5)" :key="'ri-'+i" class="cust-detail__risk-item">
+                  <template v-for="(v, k) in item" :key="k">
+                    <span v-if="v && k !== 'Id' && k !== 'KeyNo' && typeof v === 'string'">{{ k === 'CaseNo' || k === 'DocNo' || k === 'RegisterNo' ? '['+v+']' : v }}</span>
+                  </template>
+                </div>
+              </div>
+            </template>
+          </Card>
 
-          <div v-if="riskResult.Bankruptcy?.DataList?.length" class="cust-detail__risk-block">
-            <h4 class="cust-detail__risk-block-title">破产重整 ({{ riskResult.Bankruptcy.TotalCount }}条)</h4>
-            <div v-for="(item, i) in riskResult.Bankruptcy.DataList.slice(0,3)" :key="'br'+i" class="cust-detail__risk-item">
-              <strong>{{ item.CaseNo }}</strong>
-              <span>{{ item.PublicDate }}</span>
+          <!-- Other info -->
+          <Card v-if="riskResult.ChangeList?.length || riskResult.TagList?.length || riskResult.ProductList?.length" class="cust-detail__card">
+            <h3 class="cust-detail__section-title">其他信息</h3>
+            <div v-if="riskResult.ChangeList?.length"><span class="cust-detail__risk-block-title">变更记录 ({{ riskResult.ChangeList.length }})</span>
+              <div v-for="(c, i) in riskResult.ChangeList.slice(0,5)" :key="'ch'+i" class="cust-detail__risk-item"><strong>{{ c.ChangeDate }} {{ c.ProjectName }}</strong><span>{{ c.ChangeSubject || '' }}</span></div>
             </div>
-          </div>
-
-          <div v-if="riskResult.TaxIllegal?.DataList?.length" class="cust-detail__risk-block">
-            <h4 class="cust-detail__risk-block-title">税收违法 ({{ riskResult.TaxIllegal.TotalCount }}条)</h4>
-            <div v-for="(item, i) in riskResult.TaxIllegal.DataList.slice(0,3)" :key="'ti'+i" class="cust-detail__risk-item">
-              <span>{{ item.CaseNature }} · {{ item.TaxGov }}</span>
+            <div v-if="riskResult.TagList?.length" style="margin-top:8px">
+              <span v-for="t in riskResult.TagList" :key="t.Name" class="vk-tag" style="margin:2px">{{ t.Name }}</span>
             </div>
-          </div>
-
-          <div v-if="riskResult.EnvPunishment?.DataList?.length" class="cust-detail__risk-block">
-            <h4 class="cust-detail__risk-block-title">环保处罚 ({{ riskResult.EnvPunishment.TotalCount }}条)</h4>
-            <div v-for="(item, i) in riskResult.EnvPunishment.DataList.slice(0,3)" :key="'ep'+i" class="cust-detail__risk-item">
-              <span>{{ item.PunishOffice }} · 罚款{{ item.PunishAmt }}元</span>
+            <div v-if="riskResult.ProductList?.length" style="margin-top:8px"><span class="cust-detail__risk-block-title">主营产品</span>
+              <span>{{ riskResult.ProductList.map((p:any)=>p.Name).join('、') }}</span>
             </div>
-          </div>
-        </Card>
+            <div v-if="riskResult.MainProductList?.length" style="margin-top:4px">
+              <span v-for="mp in riskResult.MainProductList" :key="mp" class="vk-tag" style="margin:2px">{{ mp }}</span>
+            </div>
+          </Card>
+        </template>
 
         <Card class="cust-detail__card">
           <h3 class="cust-detail__section-title">交易概况</h3>
@@ -267,6 +262,27 @@ const drawings = ref<any[]>([]);
 const loading = ref(true);
 const scanning = ref(false);
 const riskResult = ref<any>(null);
+
+const riskCategories = [
+  { key: 'ShiXin', label: '失信被执行', cls: 'text-danger' },
+  { key: 'ZhiXing', label: '被执行人', cls: 'text-warn' },
+  { key: 'AdminPenalty', label: '行政处罚', cls: 'text-warn' },
+  { key: 'Exception', label: '经营异常', cls: 'text-warn' },
+  { key: 'Sumptuary', label: '限制高消费', cls: 'text-danger' },
+  { key: 'EquityFreeze', label: '股权冻结', cls: 'text-warn' },
+  { key: 'Bankruptcy', label: '破产重整', cls: 'text-warn' },
+  { key: 'TaxIllegal', label: '税收违法', cls: 'text-warn' },
+  { key: 'EnvPunishment', label: '环保处罚', cls: 'text-warn' },
+  { key: 'SeriousIllegal', label: '严重违法', cls: 'text-danger' },
+  { key: 'TaxOweNotice', label: '欠税公告', cls: 'text-warn' },
+  { key: 'JudicialSale', label: '司法拍卖', cls: 'text-warn' },
+  { key: 'ChattelMortgage', label: '动产抵押', cls: 'text-warn' },
+  { key: 'EquityPledge', label: '股权出质', cls: 'text-warn' },
+  { key: 'TaxAbnormal', label: '税务非正常户', cls: 'text-warn' },
+  { key: 'TaxHurry', label: '税务催缴', cls: 'text-warn' },
+  { key: 'TaxReminder', label: '税务催报', cls: 'text-warn' },
+  { key: 'PublicSecurityNotice', label: '公安通告', cls: 'text-danger' },
+];
 
 const tierVariant = computed(() => {
   const v: Record<string, any> = { A: 'success', B: 'info', C: 'default' };
@@ -354,6 +370,7 @@ onMounted(async () => {
 .text-danger { color: var(--danger) !important; }
 .text-warn { color: var(--warn) !important; }
 .mr-2 { margin-right: 8px; }
+.cust-detail__scope-text { font-size: var(--fz-sm); line-height: 1.6; max-height: 120px; overflow-y: auto; display: block; }
 
 .cust-detail__deal-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
 .cust-detail__deal-stat { text-align: center; padding: 12px; }
