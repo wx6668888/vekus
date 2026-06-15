@@ -15,12 +15,15 @@
       <div class="chat-view__messages" ref="msgContainer">
         <div v-if="loading" class="chat-view__loading">加载中...</div>
         <div v-if="aiThinking" class="chat-view__bubble chat-view__bubble--ai">
-          <div class="chat-view__thinking">
-            <span class="chat-view__thinking-dot"></span>
-            <span class="chat-view__thinking-dot"></span>
-            <span class="chat-view__thinking-dot"></span>
+          <div class="chat-view__thinking-new">
+            <div class="chat-view__thinking-ring">
+              <div class="chat-view__thinking-ring-inner"></div>
+            </div>
+            <div class="chat-view__thinking-content">
+              <span class="chat-view__thinking-title">AI 正在思考</span>
+              <span class="chat-view__thinking-hint">分析中，请稍候...</span>
+            </div>
           </div>
-          <span class="chat-view__thinking-text">AI 正在思考...</span>
         </div>
         <div
           v-for="msg in messages"
@@ -68,6 +71,7 @@ import Sidebar from '@/components/layout/Sidebar.vue';
 import ChatInput from '@/components/chat/ChatInput.vue';
 import { getMessages, sendMessage, markRead, type Message, type Conversation, getConversations } from '@/api/messages';
 import { askCustomerService } from '@/api/ai';
+import { compressImage } from '@/composables/useImageCompress';
 
 const route = useRoute();
 const conversationId = route.params.id as string;
@@ -116,17 +120,14 @@ async function onSend(text: string, file?: File) {
   let content = text;
   let messageType = 'text';
 
-  // Handle file: convert to base64 preview for images, or attach file name
+  // Handle file: compress images, then convert to base64
+  let compressedBase64: string | undefined;
   if (file) {
     if (file.type.startsWith('image/')) {
       messageType = 'image';
-      // Convert image to base64 for display
-      const reader = new FileReader();
-      const base64Promise = new Promise<string>((resolve) => {
-        reader.onload = () => resolve(reader.result as string);
-      });
-      reader.readAsDataURL(file);
-      content = await base64Promise;
+      // Compress image to max 1024px / 512KB for fast transfer
+      compressedBase64 = await compressImage(file, 1024, 512 * 1024);
+      content = compressedBase64;
     } else {
       content = text ? `${text}\n[附件: ${file.name}]` : `[附件: ${file.name}]`;
     }
@@ -149,9 +150,9 @@ async function onSend(text: string, file?: File) {
     aiThinking.value = true;
     await fetchMessages();
     try {
-      // Pass image to AI for vision recognition
-      const imageData = file && file.type.startsWith('image/') ? content : undefined;
-      const question = text || (file ? '请帮我分析这张图片的内容' : '');
+      // Pass compressed image to AI for vision recognition
+      const imageData = compressedBase64;
+      const question = text || (imageData ? '请帮我分析这张图片的内容' : '');
       const response = await askCustomerService(question, imageData);
       await sendMessage({
         conversationId,
@@ -339,31 +340,61 @@ function formatTime(dateStr: string): string {
   border-radius: 16px 16px 16px 4px;
 }
 
-.chat-view__thinking {
+/* New thinking animation — LLM-style shimmer ring */
+.chat-view__thinking-new {
   display: flex;
-  gap: 4px;
+  align-items: center;
+  gap: 12px;
 }
 
-.chat-view__thinking-dot {
-  width: 6px;
-  height: 6px;
+.chat-view__thinking-ring {
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  background: var(--text-muted);
-  animation: bounce 1.4s ease-in-out infinite both;
+  background: conic-gradient(from 0deg, var(--brand) 0%, var(--brand-light) 30%, var(--surface-sunken) 60%, var(--brand) 100%);
+  animation: think-spin 1.2s linear infinite;
+  display: grid;
+  place-items: center;
 }
 
-.chat-view__thinking-dot:nth-child(1) { animation-delay: -0.32s; }
-.chat-view__thinking-dot:nth-child(2) { animation-delay: -0.16s; }
-.chat-view__thinking-dot:nth-child(3) { animation-delay: 0s; }
-
-@keyframes bounce {
-  0%, 80%, 100% { transform: scale(0); }
-  40% { transform: scale(1); }
+.chat-view__thinking-ring-inner {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--surface);
 }
 
-.chat-view__thinking-text {
+@keyframes think-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.chat-view__thinking-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.chat-view__thinking-title {
   font-size: var(--fz-sm);
-  color: var(--text-muted);
+  font-weight: var(--fw-semibold);
+  color: var(--text);
+  background: linear-gradient(90deg, var(--text) 0%, var(--brand) 50%, var(--text) 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer-text 2s ease-in-out infinite;
+}
+
+@keyframes shimmer-text {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.chat-view__thinking-hint {
+  font-size: var(--fz-xs);
+  color: var(--text-faint);
 }
 
 @media (max-width: 768px) {

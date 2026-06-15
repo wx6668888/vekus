@@ -403,10 +403,10 @@ class ChatBody(BaseModel):
 
 @app.post("/api/ai/customer-service")
 def customer_service(body: ChatBody):
-    """AI-powered customer service using DeepSeek with knowledge base. Supports images."""
+    """AI-powered customer service with knowledge base. Supports images via vision model."""
     from .knowledge_base import DEEPSEEK_API_KEY, DEEPSEEK_API_BASE, DEEPSEEK_MODEL, SYSTEM_PROMPT
+    import traceback, os
 
-    # Try DeepSeek API first
     if DEEPSEEK_API_KEY:
         try:
             import requests
@@ -415,40 +415,56 @@ def customer_service(body: ChatBody):
                 "Content-Type": "application/json",
             }
 
-            # Build user message — support multimodal if image is provided
+            # Build messages
             if body.image:
+                # For vision requests, use multimodal format
                 user_content = [
-                    {"type": "text", "text": body.question or "请分析这张图片"},
+                    {"type": "text", "text": body.question or "请分析这张图片，提取其中的钣金零件参数、尺寸、材料等信息"},
                     {"type": "image_url", "image_url": {"url": body.image}},
                 ]
+                model = os.getenv("VEKUS_AI_MODEL", DEEPSEEK_MODEL)  # Use vision-capable model
+                max_tokens = 1000
+                timeout = 90
             else:
                 user_content = body.question
+                model = DEEPSEEK_MODEL
+                max_tokens = 800
+                timeout = 30
 
             payload = {
-                "model": DEEPSEEK_MODEL,
+                "model": model,
                 "messages": [
                     {"role": "system", "content": SYSTEM_PROMPT},
                     {"role": "user", "content": user_content},
                 ],
-                "max_tokens": 800,
+                "max_tokens": max_tokens,
                 "temperature": 0.7,
             }
+
             resp = requests.post(
                 f"{DEEPSEEK_API_BASE}/chat/completions",
                 headers=headers,
                 json=payload,
-                timeout=60,
+                timeout=timeout,
             )
             if resp.status_code == 200:
                 data = resp.json()
                 answer = data["choices"][0]["message"]["content"]
                 return {"answer": answer}
-        except Exception:
-            pass  # Fall through to local KB
+            else:
+                # Log the error for debugging
+                error_detail = resp.text[:300] if resp.text else "unknown"
+                print(f"[AI] API error {resp.status_code}: {error_detail}")
+                if body.image:
+                    return {"answer": "抱歉，当前 AI 模型暂不支持图片识别。请将图纸上传到「报价页面」使用专用识图功能，或在此输入文字问题。"}
+        except Exception as e:
+            traceback.print_exc()
+            print(f"[AI] Exception: {e}")
+            # Fall through to local KB
 
     # Local fallback
     if body.image:
-        return {"answer": "我收到了您的图片，但当前 AI 服务未配置 API Key，暂时无法识别图片内容。如需 AI 识图，请将图纸上传到报价页面进行识别，或联系管理员配置 DeepSeek API Key。"}
+        return {"answer": "抱歉，AI 识图服务暂时不可用。请尝试：\n1. 在「报价页面」上传图纸进行识别报价\n2. 输入文字描述您的问题\n3. 联系管理员检查 API 配置"}
     return {"answer": f"我是Vekus智能助手小V！您可以问我关于报价流程、材料价格、交易广场、充值等问题。如需人工服务，请拨打400-888-9999。\n\n您的问题是：{body.question}\n\n建议尝试咨询：\n1. 如何上传图纸进行报价？\n2. 交易广场怎么发布信息？\n3. 如何给客户发送报价？"}
 
 
