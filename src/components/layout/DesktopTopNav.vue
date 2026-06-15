@@ -26,16 +26,12 @@
                       <div class="vk-dd__card-pattern"></div>
                       <div class="vk-dd__card-glow"></div>
                       <component :is="m.icon" class="vk-dd__card-icon" :size="22" />
-                      <div class="vk-dd__card-text">
-                        <span class="vk-dd__card-title">{{ m.label }}</span>
-                        <span class="vk-dd__card-desc">{{ m.desc }}</span>
-                      </div>
+                      <span class="vk-dd__card-title">{{ m.label }}</span>
                     </router-link>
                   </div>
                 </div>
                 <!-- Right: link list -->
                 <div class="vk-dd__right">
-                  <div class="vk-dd__right-title">更多</div>
                   <router-link v-for="m in productionSmall" :key="m.path" :to="m.path" class="vk-dd__right-link" @click="open=''">
                     <component :is="m.icon" :size="15" /><span>{{ m.label }}</span>
                     <ChevronRight :size="13" class="vk-dd__right-arrow" />
@@ -57,20 +53,16 @@
                 <!-- Left: big feature cards -->
                 <div class="vk-dd__left">
                   <div class="vk-dd__grid vk-dd__grid--2col">
-                    <router-link v-for="m in businessBig" :key="m.path" :to="m.path" class="vk-dd__card vk-dd__card--feature" @click="open=''">
+                    <router-link v-for="m in businessBig" :key="m.path" :to="m.path" class="vk-dd__card" @click="open=''">
                       <div class="vk-dd__card-pattern"></div>
                       <div class="vk-dd__card-glow"></div>
-                      <component :is="m.icon" class="vk-dd__card-icon" :size="26" />
-                      <div class="vk-dd__card-text">
-                        <span class="vk-dd__card-title">{{ m.label }}</span>
-                        <span class="vk-dd__card-desc">{{ m.desc }}</span>
-                      </div>
+                      <component :is="m.icon" class="vk-dd__card-icon" :size="22" />
+                      <span class="vk-dd__card-title">{{ m.label }}</span>
                     </router-link>
                   </div>
                 </div>
                 <!-- Right: link list -->
                 <div class="vk-dd__right">
-                  <div class="vk-dd__right-title">更多</div>
                   <router-link v-for="m in businessSmall" :key="m.path" :to="m.path" class="vk-dd__right-link" @click="open=''">
                     <component :is="m.icon" :size="15" /><span>{{ m.label }}</span>
                     <ChevronRight :size="13" class="vk-dd__right-arrow" />
@@ -198,27 +190,21 @@ function isMenuActive(menu: string) {
   z-index: 200;
 }
 
-/* Split layout: left cards + right link list */
+/* Split layout */
 .vk-dd__split { display: flex; }
-.vk-dd__left { flex: 1; padding: 16px; min-width: 0; }
+.vk-dd__left { flex: 1; padding: 14px; min-width: 0; }
 .vk-dd__right {
-  width: 180px; flex-shrink: 0;
-  padding: 16px 16px 16px 8px;
+  width: 160px; flex-shrink: 0;
+  padding: 14px 12px 14px 6px;
   border-left: 1px solid var(--border);
   background: var(--surface-sunken);
   border-radius: 0 18px 18px 0;
 }
 
-.vk-dd__right-title {
-  font-size: 11px; font-weight: 600; color: var(--text-faint);
-  text-transform: uppercase; letter-spacing: 0.5px;
-  margin-bottom: 8px; padding-left: 12px;
-}
-
 .vk-dd__right-link {
-  display: flex; align-items: center; gap: 8px;
-  padding: 7px 12px; border-radius: 8px;
-  font-size: 13px; color: var(--text);
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 10px; border-radius: 8px;
+  font-size: 13px; color: var(--text); white-space: nowrap;
   text-decoration: none; transition: all 0.1s;
 }
 .vk-dd__right-link:hover { background: var(--brand-light); color: var(--brand); }
@@ -226,14 +212,15 @@ function isMenuActive(menu: string) {
 .vk-dd__right-arrow { opacity: 0; transition: all 0.15s; color: var(--text-faint); flex-shrink: 0; }
 .vk-dd__right-link:hover .vk-dd__right-arrow { opacity: 1; transform: translateX(2px); color: var(--brand); }
 
-/* Grid cards in left panel */
-.vk-dd__grid { display: grid; gap: 10px; grid-template-columns: repeat(3, 1fr); }
+/* Square grid cards */
+.vk-dd__grid { display: grid; gap: 8px; grid-template-columns: repeat(3, 1fr); }
 .vk-dd__grid--2col { grid-template-columns: repeat(2, 1fr); }
 
 .vk-dd__card {
   position: relative; isolation: isolate; overflow: hidden;
-  display: flex; flex-direction: column; gap: 10px;
-  padding: 14px; border-radius: 10px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  aspect-ratio: 1;
+  padding: 12px; border-radius: 10px;
   background: var(--surface-sunken);
   border: 1px solid transparent;
   text-decoration: none; cursor: pointer;
@@ -244,9 +231,7 @@ function isMenuActive(menu: string) {
   box-shadow: 0 2px 12px rgba(0,0,0,0.05);
   transform: translateY(-1px);
 }
-.vk-dd__card--feature { padding: 18px; gap: 14px; }
 
-/* Geometric dot pattern */
 .vk-dd__card-pattern {
   position: absolute; inset: 0; z-index: -1; opacity: 0.35;
   background-image: radial-gradient(circle, var(--border) 0.7px, transparent 0.7px);
@@ -265,9 +250,7 @@ function isMenuActive(menu: string) {
 
 .vk-dd__card-icon { color: var(--text-muted); opacity: 0.65; flex-shrink: 0; }
 
-.vk-dd__card-text { display: flex; flex-direction: column; gap: 3px; }
-.vk-dd__card-title { font-size: 13px; font-weight: 600; color: var(--text); }
-.vk-dd__card-desc { font-size: 11px; color: var(--text-muted); line-height: 1.4; }
+.vk-dd__card-title { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; }
 
 /* Transitions */
 .vk-dd-fade-enter-active { transition: all 0.18s cubic-bezier(0.16,1,0.3,1); }
