@@ -1,6 +1,8 @@
 import hashlib
 import json
+import os
 import random
+import shutil
 import string
 import tempfile
 import time as time_module
@@ -474,7 +476,7 @@ class ChatBody(BaseModel):
 def customer_service(body: ChatBody):
     """AI-powered customer service with knowledge base. Supports images via vision model."""
     from .knowledge_base import DEEPSEEK_API_KEY, DEEPSEEK_API_BASE, DEEPSEEK_MODEL, SYSTEM_PROMPT
-    import traceback, os
+    import traceback
 
     if DEEPSEEK_API_KEY:
         try:
@@ -1687,7 +1689,6 @@ def audit_list(limit: int = 100):
 
 # ═══════════════════ Document Management ═══════════════════
 
-import shutil
 DOC_STORAGE = Path(os.getenv("VEKUS_STORAGE_DIR", "storage/uploads"))
 DOC_STORAGE.mkdir(parents=True, exist_ok=True)
 
