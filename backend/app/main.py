@@ -1746,6 +1746,43 @@ def docs_delete(doc_id: str):
     return {"ok": True}
 
 
+# ═══════════════════ System: Backup & Notifications ═══════════════════
+
+@app.get("/api/system/backup")
+def system_backup():
+    """Download database backup."""
+    db_path = Path("vekus.db")
+    if not db_path.exists():
+        raise HTTPException(404, "Database not found")
+    from fastapi.responses import FileResponse
+    return FileResponse(str(db_path), filename=f"vekus_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.db",
+                        media_type="application/octet-stream")
+
+@app.get("/api/system/notifications")
+def system_notifications(limit: int = 50):
+    """Get combined notifications: approvals + system messages + low stock alerts."""
+    result = []
+    with SessionLocal() as db:
+        # Pending approvals
+        approvals = db.scalars(select(Approval).where(Approval.status == "pending").order_by(Approval.id.desc()).limit(10)).all()
+        for a in approvals:
+            result.append({"id": f"ap-{a.id}", "type": "approval", "title": f"待审批: {a.entity_title}",
+                "detail": f"申请人: {a.applicant}", "time": a.created_at, "status": "pending"})
+        # Low stock alerts
+        inv_items = db.scalars(select(InventoryItem).order_by(InventoryItem.id)).all()
+        for inv in inv_items:
+            if inv.quantity <= inv.safety_stock and inv.safety_stock > 0:
+                result.append({"id": f"inv-{inv.id}", "type": "inventory", "title": f"库存预警: {inv.name}",
+                    "detail": f"当前 {inv.quantity}{inv.unit}, 安全库存 {inv.safety_stock}", "time": inv.updated_at, "status": "warn"})
+        # Recent system messages
+        msgs = db.scalars(select(Message).where(Message.message_type == "system").order_by(Message.id.desc()).limit(10)).all()
+        for m in msgs:
+            result.append({"id": f"msg-{m.id}", "type": "system", "title": m.content[:80],
+                "detail": "", "time": m.created_at, "status": "info"})
+    result.sort(key=lambda x: x["time"], reverse=True)
+    return result[:limit]
+
+
 @app.get("/api/health")
 def health():
     return {"status": "ok", "service": "vekus-api", "version": "0.2.0"}

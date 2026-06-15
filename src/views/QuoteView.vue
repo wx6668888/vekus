@@ -56,6 +56,12 @@
           <FileDropzone :file="file" :recognizing="recognizing" @update:file="file = $event" @recognize="handleRecognize" />
         </Card>
 
+        <!-- 3D Preview -->
+        <Card v-if="file" class="quote-form__section">
+          <h3 class="quote-form__section-title">3D 预览</h3>
+          <ModelPreview :file-url="filePreviewUrl" :file-name="file?.name" />
+        </Card>
+
         <Card v-if="showRecognition" class="quote-form__section">
           <h3 class="quote-form__section-title">
             AI 识别结果
@@ -190,6 +196,7 @@ import Badge from '@/components/base/Badge.vue';
 import SelectMenu from '@/components/base/SelectMenu.vue';
 import PriceDisplay from '@/components/data/PriceDisplay.vue';
 import { FileDropzone, RecognizedFieldList } from '@/components/quote';
+import ModelPreview from '@/components/quote/ModelPreview.vue';
 import CustomerPicker from '@/components/quote/CustomerPicker.vue';
 
 const route = useRoute();
@@ -199,6 +206,7 @@ const draftStore = useQuoteDraftStore();
 const currentStep = ref(0);
 const showRecognition = ref(false);
 const file = ref<File | null>(null);
+const filePreviewUrl = computed(() => file.value ? URL.createObjectURL(file.value) : '');
 const recognizing = ref(false);
 const lastSaved = ref<number | null>(null);
 const savedId = ref<string | null>(null);
