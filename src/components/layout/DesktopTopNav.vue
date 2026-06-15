@@ -19,18 +19,14 @@
           <Transition name="vk-dd-fade">
             <div v-if="open==='production'" class="vk-dd__panel">
               <div class="vk-dd__split">
-                <!-- Left: cards grid -->
                 <div class="vk-dd__left">
                   <div class="vk-dd__grid">
                     <router-link v-for="m in productionBig" :key="m.path" :to="m.path" class="vk-dd__card" @click="open=''">
-                      <div class="vk-dd__card-pattern"></div>
-                      <div class="vk-dd__card-glow"></div>
-                      <component :is="m.icon" class="vk-dd__card-icon" :size="22" />
+                      <component :is="m.icon" class="vk-dd__card-icon" :size="24" />
                       <span class="vk-dd__card-title">{{ m.label }}</span>
                     </router-link>
                   </div>
                 </div>
-                <!-- Right: link list -->
                 <div class="vk-dd__right">
                   <router-link v-for="m in productionSmall" :key="m.path" :to="m.path" class="vk-dd__right-link" @click="open=''">
                     <component :is="m.icon" :size="15" /><span>{{ m.label }}</span>
@@ -50,18 +46,14 @@
           <Transition name="vk-dd-fade">
             <div v-if="open==='business'" class="vk-dd__panel">
               <div class="vk-dd__split">
-                <!-- Left: big feature cards -->
                 <div class="vk-dd__left">
-                  <div class="vk-dd__grid vk-dd__grid--2col">
+                  <div class="vk-dd__grid">
                     <router-link v-for="m in businessBig" :key="m.path" :to="m.path" class="vk-dd__card" @click="open=''">
-                      <div class="vk-dd__card-pattern"></div>
-                      <div class="vk-dd__card-glow"></div>
-                      <component :is="m.icon" class="vk-dd__card-icon" :size="22" />
+                      <component :is="m.icon" class="vk-dd__card-icon" :size="24" />
                       <span class="vk-dd__card-title">{{ m.label }}</span>
                     </router-link>
                   </div>
                 </div>
-                <!-- Right: link list -->
                 <div class="vk-dd__right">
                   <router-link v-for="m in businessSmall" :key="m.path" :to="m.path" class="vk-dd__right-link" @click="open=''">
                     <component :is="m.icon" :size="15" /><span>{{ m.label }}</span>
@@ -103,18 +95,18 @@ const open = ref('');
 const userName = ref(useAuthStore().user?.name || 'User');
 
 const productionBig = [
-  { path: '/bom', label: 'BOM 物料清单', desc: '产品层级结构、材料定额与版本管理', icon: Layers },
-  { path: '/inventory', label: '库存管理', desc: '出入库操作、安全库存预警与盘点', icon: Package },
-  { path: '/production', label: '生产工单', desc: '排产调度、工序流转与报工跟踪', icon: Wrench },
+  { path: '/bom', label: 'BOM 物料清单', icon: Layers },
+  { path: '/production', label: '生产与库存', icon: Package },
 ];
 const productionSmall = [
+  { path: '/inventory', label: '库存详情', icon: Package },
   { path: '/quality', label: '质量管理', icon: ShieldCheck },
   { path: '/purchases', label: '采购管理', icon: Truck },
 ];
 
 const businessBig = [
-  { path: '/quote', label: '智能报价', desc: 'AI 识图自动提取参数，实时计算报价总价，支持 PDF 导出', icon: FileText },
-  { path: '/customers', label: '客户管理', desc: '企业工商查询、风险排查、客户等级与跟进记录', icon: Users },
+  { path: '/quote', label: '智能报价', icon: FileText },
+  { path: '/customers', label: '客户管理', icon: Users },
 ];
 const businessSmall = [
   { path: '/history', label: '历史报价', icon: History },
@@ -178,26 +170,26 @@ function isMenuActive(menu: string) {
 .vk-topnav__user { flex-shrink: 0; cursor: pointer; }
 .vk-topnav__avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, var(--brand), var(--accent)); color: white; display: grid; place-items: center; font-size: 14px; font-weight: var(--fw-bold); }
 
-/* ====== Dropdown Panel ====== */
+/* ====== Dropdown ====== */
 .vk-dd { position: relative; }
 .vk-dd__panel {
   position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%);
-  background: rgba(255,255,255,0.97);
-  backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(0,0,0,0.06);
+  background: rgba(255,255,255,0.88);
+  backdrop-filter: blur(30px) saturate(180%);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
+  border: 0.5px solid rgba(0,0,0,0.06);
   border-radius: 18px;
   box-shadow: 0 4px 6px rgba(0,0,0,0.02), 0 16px 48px rgba(0,0,0,0.1);
   z-index: 200;
 }
 
-/* Split layout */
 .vk-dd__split { display: flex; }
 .vk-dd__left { flex: 1; padding: 14px; min-width: 0; }
 .vk-dd__right {
   width: 160px; flex-shrink: 0;
   padding: 14px 12px 14px 6px;
-  border-left: 1px solid var(--border);
-  background: var(--surface-sunken);
+  border-left: 0.5px solid rgba(0,0,0,0.05);
+  background: rgba(0,0,0,0.015);
   border-radius: 0 18px 18px 0;
 }
 
@@ -212,45 +204,53 @@ function isMenuActive(menu: string) {
 .vk-dd__right-arrow { opacity: 0; transition: all 0.15s; color: var(--text-faint); flex-shrink: 0; }
 .vk-dd__right-link:hover .vk-dd__right-arrow { opacity: 1; transform: translateX(2px); color: var(--brand); }
 
-/* Square grid cards */
-.vk-dd__grid { display: grid; gap: 8px; grid-template-columns: repeat(3, 1fr); }
-.vk-dd__grid--2col { grid-template-columns: repeat(2, 1fr); }
+/* ====== 2 Big Cards ====== */
+.vk-dd__grid { display: grid; gap: 10px; grid-template-columns: repeat(2, 1fr); }
 
 .vk-dd__card {
   position: relative; isolation: isolate; overflow: hidden;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
-  aspect-ratio: 1;
-  padding: 12px; border-radius: 10px;
-  background: var(--surface-sunken);
-  border: 1px solid transparent;
+  display: flex; flex-direction: column; justify-content: space-between;
+  height: 140px; width: 180px;
+  padding: 16px; border-radius: 14px;
+  background: rgba(255,255,255,0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 0.5px solid rgba(0,0,0,0.06);
   text-decoration: none; cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.16,1,0.3,1);
+}
+.vk-dd__card::before {
+  content: ''; position: absolute; inset: 0; z-index: -1;
+  background-image: radial-gradient(circle, rgba(0,0,0,0.04) 0.6px, transparent 0.6px);
+  background-size: 11px 11px;
+  mask-image: linear-gradient(160deg, black 30%, transparent 100%);
+  -webkit-mask-image: linear-gradient(160deg, black 30%, transparent 100%);
+  border-radius: 14px;
+}
+.vk-dd__card::after {
+  content: ''; position: absolute; inset: -30%; z-index: -2; opacity: 0;
+  transition: opacity 0.35s ease;
+  background: conic-gradient(from 0deg, rgba(37,99,235,0.05), rgba(124,58,237,0.03), rgba(37,99,235,0.02), rgba(37,99,235,0.05));
+  border-radius: 50%; filter: blur(50px);
 }
 .vk-dd__card:hover {
-  background: #fff; border-color: var(--border);
-  box-shadow: 0 2px 12px rgba(0,0,0,0.05);
-  transform: translateY(-1px);
+  background: rgba(255,255,255,0.7);
+  border-color: rgba(0,0,0,0.1);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+  transform: translateY(-2px);
+}
+.vk-dd__card:hover::after { opacity: 1; }
+
+.vk-dd__card-icon {
+  align-self: flex-start;
+  color: var(--text-muted); opacity: 0.7;
 }
 
-.vk-dd__card-pattern {
-  position: absolute; inset: 0; z-index: -1; opacity: 0.35;
-  background-image: radial-gradient(circle, var(--border) 0.7px, transparent 0.7px);
-  background-size: 12px 12px;
-  mask-image: linear-gradient(135deg, black 35%, transparent 100%);
-  -webkit-mask-image: linear-gradient(135deg, black 35%, transparent 100%);
+.vk-dd__card-title {
+  align-self: flex-start;
+  font-size: 14px; font-weight: 600; color: var(--text);
+  white-space: nowrap;
 }
-
-.vk-dd__card-glow {
-  position: absolute; inset: -20%; z-index: -1; opacity: 0;
-  transition: opacity 0.3s ease;
-  background: conic-gradient(from 0deg, rgba(37,99,235,0.06), rgba(124,58,237,0.04), rgba(37,99,235,0.03), rgba(37,99,235,0.06));
-  border-radius: 50%; filter: blur(40px);
-}
-.vk-dd__card:hover .vk-dd__card-glow { opacity: 1; }
-
-.vk-dd__card-icon { color: var(--text-muted); opacity: 0.65; flex-shrink: 0; }
-
-.vk-dd__card-title { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; }
 
 /* Transitions */
 .vk-dd-fade-enter-active { transition: all 0.18s cubic-bezier(0.16,1,0.3,1); }
@@ -259,5 +259,4 @@ function isMenuActive(menu: string) {
 .vk-dd-fade-leave-to { opacity: 0; transform: translateX(-50%) translateY(-3px) scale(0.98); }
 
 @media (min-width: 769px) { .vk-topnav { display: block; } }
-@media (max-width: 860px) { .vk-dd__right { width: 140px; } .vk-dd__panel { width: 480px; } }
 </style>
