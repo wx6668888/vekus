@@ -212,10 +212,8 @@ function isMenuActive(menu: string) {
   display: flex; flex-direction: column; justify-content: space-between;
   height: 140px; width: 180px;
   padding: 16px; border-radius: 14px;
-  background: rgba(255,255,255,0.45);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 0.5px solid rgba(0,0,0,0.06);
+  background: var(--surface-sunken);
+  border: 0.5px solid rgba(0,0,0,0.05);
   text-decoration: none; cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16,1,0.3,1);
 }
