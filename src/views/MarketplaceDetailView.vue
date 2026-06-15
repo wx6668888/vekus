@@ -100,7 +100,16 @@ async function contactSeller() {
       participants: [1, item.value.ownerUserId || 2],
     });
     const convId = msg.conversationId;
-    router.push(`/messages/${convId}`);
+    router.push({
+      path: '/messages',
+      query: {
+        conv: String(convId),
+        productTitle: item.value.title,
+        productPrice: String(item.value.price || 0),
+        productImage: item.value.images?.[0] || '',
+        listingId: item.value.id || '',
+      },
+    });
   } catch {
     router.push('/messages');
   }
