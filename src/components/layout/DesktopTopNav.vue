@@ -47,7 +47,7 @@
             <div v-if="open==='business'" class="vk-dd__panel">
               <div class="vk-dd__split">
                 <div class="vk-dd__left">
-                  <div class="vk-dd__grid">
+                  <div class="vk-dd__grid vk-dd__grid--3col">
                     <router-link v-for="m in businessBig" :key="m.path" :to="m.path" class="vk-dd__card" @click="open=''">
                       <component :is="m.icon" class="vk-dd__card-icon" :size="24" />
                       <span class="vk-dd__card-title">{{ m.label }}</span>
@@ -107,10 +107,10 @@ const productionSmall = [
 const businessBig = [
   { path: '/quote', label: '智能报价', icon: FileText },
   { path: '/customers', label: '客户管理', icon: Users },
+  { path: '/marketplace', label: '交易广场', icon: ShoppingBag },
 ];
 const businessSmall = [
   { path: '/history', label: '历史报价', icon: History },
-  { path: '/marketplace', label: '交易广场', icon: ShoppingBag },
   { path: '/approvals', label: '审批中心', icon: CheckCircle },
   { path: '/invoices', label: '发票对账', icon: FileText },
   { path: '/documents', label: '文档管理', icon: FolderOpen },
@@ -207,6 +207,7 @@ function isMenuActive(menu: string) {
 
 /* ====== 2 Big Cards ====== */
 .vk-dd__grid { display: grid; gap: 10px; grid-template-columns: repeat(2, 1fr); }
+.vk-dd__grid--3col { grid-template-columns: repeat(3, 1fr); }
 
 .vk-dd__card {
   position: relative; isolation: isolate; overflow: hidden;
