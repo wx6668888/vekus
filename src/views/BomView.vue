@@ -146,7 +146,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, reactive, computed, onMounted } from 'vue';
 import { Plus } from 'lucide-vue-next';
 import Sidebar from '@/components/layout/Sidebar.vue';
 import TopBar from '@/components/layout/TopBar.vue';
