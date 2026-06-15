@@ -1,0 +1,418 @@
+Vekus 钣金 AI 报价系统 —— 技术设计与实施方案
+1. 项目概述
+1.1 背景与目标
+Vekus 是一个面向钣金加工行业的 AI 报价工作台，旨在帮助工厂实现从图纸上传、自动识别、参数修正、报价计算到客户管理与交易撮合的完整闭环。系统支持老板、业务员、客户三类角色，覆盖桌面端与移动端。
+
+核心目标：
+
+不依赖简单 OCR，而是对 DWG / 三维文件 / PDF / 图片做结构化理解
+
+自动推断报价所需参数（板厚、折弯数、切割长度、孔数、焊接量等）
+
+支持人工修正与二次计算，输出可直接用于报价的 quotePayload
+
+提供报价单生成、历史查询、客户管理、交易市场、AI 客服等增值功能
+
+1.2 用户角色
+角色	能力
+老板	配置报价参数与利润率、管理业务员与客户、查看经营报表、管理推荐奖励
+业务员	上传图纸、触发识别、人工修正参数、生成报价、管理客户与图纸、标记成交
+客户	查看报价结果、浏览交易市场、联系卖家、查看个人资料
+1.3 核心主链路
+业务员选择客户 → 上传图纸 → AI 识别参数 → 人工修正 → 系统自动报价 → 生成报价链接 → 导出 PDF/Excel → 分享给客户 → 跟踪成交状态并归档。
+
+2. 系统架构
+2.1 整体处理流程
+text
+DWG/PDF/图片/三维文件
+      ↓
+ 文件类型分流
+      ↓
+┌─────────────┬─────────────┬─────────────┐
+│ CAD结构解析  │  OCR+视觉   │ 3D特征提取  │
+└─────────────┴─────────────┴─────────────┘
+      ↓
+  特征归类 & AI 推断
+      ↓
+  二次计算（切割长度、折弯次数、喷涂面积等）
+      ↓
+  输出 quotePayload + confidence
+2.2 文件类型与处理策略
+文件类型	处理方式
+DWG / DXF	CAD 结构解析（图层、块、标注、几何）+ 规则补全
+STEP / STP / X_T / SLDPRT	三维几何特征提取 → 判断是否为钣金件 → 映射为报价字段
+PDF / 图片（PNG/JPG）	OCR + 视觉模型识别（标注、尺寸、技术要求）
+2.3 统一 AI 识图管道
+所有文件类型统一接入 unified-ai-pipeline，按类型选择前处理策略，最终输出 confidence、detections、quotePayload。处理器必须可插拔，支持 MockProcessor、ClaudeProcessor、QwenProcessor 等。
+
+2.4 异步识图队列
+为避免大文件阻塞前端，采用异步任务队列：
+
+POST /api/ai/scan 上传文件，立即返回 scanId
+
+后台线程（或 Celery/Redis Queue）处理识别
+
+GET /api/ai/scan/{scanId} 查询状态（pending/processing/done/failed）
+
+完成后返回完整 quotePayload
+
+当前使用内存队列 + 后台线程，适合单机部署；后续可升级为持久化任务表 + 分布式队列。
+
+3. 后端结构与部署
+3.1 目录结构（简化）
+text
+backend/
+├── app/
+│   ├── main.py               # FastAPI 入口
+│   ├── models.py             # SQLAlchemy 模型
+│   ├── services/
+│   │   ├── ai_pipeline.py    # 统一识别管道
+│   │   ├── async_queue.py    # 异步任务队列
+│   │   ├── dwg_parser.py     # DWG/DXF 解析
+│   │   ├── file_type.py      # 文件类型识别
+│   │   ├── processor.py      # 基础处理器接口
+│   │   └── scan_service.py   # 扫描任务管理
+│   └── __init__.py
+├── storage/uploads/          # 上传文件存储
+├── requirements.txt
+├── .env.example
+└── README.md
+3.2 环境变量（示例）
+env
+VEKUS_ENV=production
+VEKUS_HOST=0.0.0.0
+VEKUS_PORT=8000
+VEKUS_STORAGE_DIR=backend/storage/uploads
+VEKUS_CORS_ORIGINS=https://vekus.qzz.io
+VEKUS_AI_PROVIDER=claude          # mock / claude / qwen / openai
+VEKUS_AI_API_KEY=your_key_here
+VEKUS_AI_BASE_URL=https://api.anthropic.com
+
+# AI 客服专用
+AI_CHAT_API_KEY=xxx
+AI_CHAT_API_BASE=https://openrouter.ai/api/v1/chat/completions
+AI_CHAT_MODEL=openai/gpt-4o-mini
+3.3 Nginx 配置（前端静态 + API 反代）
+nginx
+server {
+    listen 80;
+    server_name vekus.qzz.io;
+    root /www/wwwroot/vekus.qzz.io;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+    location /api/ {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+    client_max_body_size 50m;
+}
+3.4 启动命令
+bash
+cd backend
+uvicorn app.main:app --host 0.0.0.0 --port 8000
+生产环境建议使用 systemd / supervisor 守护，并配置 HTTPS（80 跳转 443 + SSL 证书）。
+
+4. 数据模型
+4.1 核心表及关键字段
+表名	主要字段	用途
+users	id, username, phone, role, factory_name, invite_code, free_query_count, wechat_openid, last_login_at, deleted_at	用户与角色
+customers	id, customer_code, name, contact_name, phone, assigned_sales_id, deal_status, tags, industry, region, last_contact_at	客户管理
+drawings	id, drawing_no, customer_id, file_name, file_type, file_path, status, sheet_thickness, blank_length_mm, scan_id, confidence	图纸与识别任务
+quotes	id, quote_no, customer_id, sales_id, material_price, surface_price, cut_length, bend_count, spray_area, spot_weld_count, full_weld_length, light_hole_count, thread_hole_count, countersunk_hole_count, extra_cost, tax_factor, discount_factor, pack_fee, total_price, profit_amount, valid_until, share_url, pdf_url	报价单核心信息
+pricing_parameters	id, category (材料/表面处理/焊接等), name, value, unit, common, enabled, sort_order	报价参数字典
+listings	id, owner_user_id, title, listing_type (出售/求购), product_type, price, stock_qty, material, thickness_mm, dimensions, surface_treatment	交易市场商品
+chat_messages	id, listing_id, user_id, role, text, created_at	买卖双方沟通
+audit_logs	id, user_id, action, target_type, target_id, before_json, after_json, ip, created_at	操作审计日志
+scan_tasks	id, scan_id, source_file_name, status, confidence, progress, error_message	异步识别任务状态
+详细字段及映射关系参见《数据库字段说明》与《数据库补充清单》。
+
+4.2 字段映射优先级
+人工确认
+
+DWG 结构直接读取
+
+OCR 提取
+
+AI 推理补全
+
+默认值
+
+冲突处理示例：DWG 标注板厚 1.2mm 与 OCR 识别 1.0mm 冲突时，优先取 DWG 标注并提示人工确认。
+
+5. 文件识别与提取规则
+5.1 DWG / DXF 结构提取
+图层：包含 DIM、尺寸 → 尺寸层；CENTER、孔 → 孔位层；BEND、折弯 → 折弯层；WELD、焊 → 焊接层。
+
+文本：优先读取标题栏 → 技术说明 → 视图附近文字；用于推断材料、厚度、表面处理。
+
+尺寸：线性尺寸（统一 mm）、角度尺寸、半径/直径。冲突时优先尺寸标注，次选几何计算。
+
+块与阵列：名称含 HOLE、BOLT、WELD 分别对应孔、标准件、焊接符号；阵列数量直接参与统计。
+
+几何实体：闭合多段线视为轮廓；圆形视为孔；SPLINE 需离散化。
+
+5.2 三维文件识别规则（STEP / X_T / SLDPRT）
+STEP/STP：提取实体、面、边界、装配层级；若存在薄板特征优先进入钣金件判断。
+
+X_T：提取曲面边界、实体边界、孔/槽/圆角；闭合轮廓视为外形。
+
+SLDPRT：利用特征树读取薄板特征、折弯特征、孔向导、切除拉伸。
+
+钣金件判定条件：厚度 << 长宽；存在折弯边/折弯半径；孔、开槽、切口等。
+
+非钣金件处理：折弯数置 0，切割长度按外轮廓估算，人工确认是否进入报价流程。
+
+5.3 二次计算规则
+字段	计算方式
+切割长度	外轮廓周长 + 内部切割路径长度求和
+折弯总数	统计折弯线数量，多视图去重，结合剖视图验证
+喷涂面积	外表面积 - 不喷涂区域，多面展开时累加可喷涂面
+孔加工量	光孔、螺纹孔、沉头孔分别统计（孔标注 + 块统计 + 阵列倍增）
+焊接量	圆点符号 → 点焊数；连续线性焊缝 → 满焊长度；结合引线说明
+毛坯重量	体积 × 材料密度（或人工输入）
+5.4 人工确认触发条件
+材料 / 板厚缺失
+
+孔类冲突（如同时出现螺纹与光孔标注）
+
+折弯线重复或无法判定
+
+焊接符号模糊
+
+表面处理无法识别
+
+置信度低于 0.80
+
+6. 报价计算与参数配置
+6.1 标准报价字段（quotePayload）
+json
+{
+  "customerName": "XX科技",
+  "quantity": 100,
+  "materialPrice": 12.3,
+  "surfacePrice": 18,
+  "cutLength": 4.6,
+  "bendCount": 12,
+  "sprayArea": 0.18,
+  "spotWeldCount": 24,
+  "fullWeldLength": 1.3,
+  "lightHoleCount": 8,
+  "threadHoleCount": 4,
+  "countersunkHoleCount": 2,
+  "extraCost": 50,
+  "taxFactor": 1.25,
+  "discountFactor": 0.95,
+  "packFee": 0.5
+}
+6.2 利润与费率
+客户利润率（展示给客户）
+
+内部利润率（老板核算）
+两者均可由老板在后台配置。
+
+6.3 参数字典（pricing_parameters）
+支持动态扩展，分类包括：材料、表面处理、焊接参数、折弯参数、孔类参数、网孔板参数等。
+
+字段：category, name, value, unit, common, enabled, sort_order
+
+报价页仅读取 enabled=1 的参数用于选项和单价。
+
+与 system_settings（全局配置）职责分离。
+
+6.4 报价计算公式（示例）
+text
+材料费 = 材料单价 × 毛坯重量
+切割费 = 切割长度 × 切割单价
+折弯费 = 折弯次数 × 折弯单价
+孔加工费 = 光孔数×光孔单价 + 螺纹孔数×螺纹单价 + 沉头孔数×沉头单价
+焊接费 = 点焊数×点焊单价 + 满焊长度×满焊单价
+喷涂费 = 喷涂面积 × 表面处理单价
+总成本 = 材料费 + 切割费 + 折弯费 + 孔加工费 + 焊接费 + 喷涂费 + 额外费
+总价 = 总成本 × 税管费系数 × 折扣系数 + 包装费
+利润 = 总价 - 总成本
+7. 接口协议
+7.1 处理器通用协议
+python
+def process(file_path: Path, original_name: str) -> tuple[float, list[DetectionItem], QuotePayload]
+confidence: 0~1
+
+detections: [{"label": "板厚", "value": "1.2 mm", "confidence": 0.98}]
+
+quotePayload: 标准报价字段
+
+7.2 主要 API 端点
+端点	方法	说明
+/api/ai/scan	POST	上传文件，返回 scanId
+/api/ai/scan/{scanId}	GET	查询识别状态与结果
+/api/customers	POST	创建/更新客户
+/api/drawings	POST	保存图纸记录
+/api/quotes	POST	保存报价单
+/api/settings	POST	新增报价参数
+/api/auth/login	POST	手机号密码登录，返回 token
+/api/auth/session	GET	恢复会话
+/api/ai/customer-service	POST	统一 AI 客服问答
+/api/dashboard/summary	GET	首页统计数据
+/api/marketplace/listings	GET	获取交易市场列表
+8. UI 蓝图与设计规范
+8.1 设计风格
+简约现代、科技感强，参考 v0.dev
+
+主色：蓝 #2563eb、深色背景 #0f172a、青绿强调 #00f5d4
+
+卡片圆角 16~24px，轻阴影，大留白
+
+同时支持桌面端（侧边导航）与移动端（底部导航）
+
+8.2 主要页面及功能
+页面路径	功能
+frontend-pages/index.html	首页：产品介绍、统计数据、快速入口、统一客服
+frontend-pages/quote.html	报价页（核心）：图纸上传、AI 识别、参数修正、实时计算、生成报价
+frontend-pages/result.html	报价结果页：展示总价、明细、复制摘要、继续报价
+frontend-pages/history.html	历史报价：搜索、状态筛选、复用报价
+frontend-pages/marketplace.html	交易市场：商品浏览、发布商品、买卖双方留言
+frontend-pages/settings.html	参数设置：维护材料/表面处理/焊接/孔类等字典
+frontend-pages/profile.html	个人中心：账号信息、免费查询次数、快捷入口
+admin-dashboard.html	管理后台：报价总览、任务队列、业务员绩效
+admin-customers.html	客户管理：客户列表、成交状态、报价复用
+8.3 响应式断点
+桌面 → 单栏切换：980px
+
+移动底部导航启用：720px
+
+极端小屏压缩间距：640px
+
+8.4 全局组件
+统一桌面/移动端导航（高亮当前页）
+
+卡片、表单控件（最小高度 48px）、按钮（主/次）、徽章（胶囊形）
+
+表格（横向滚动）、空状态、错误提示
+
+9. 统一 AI 客服
+9.1 接入方式
+公共组件：frontend-pages/quote-data.js 中的 initCustomerServiceWidget()
+
+所有主要页面（首页、报价页、历史页、交易页、参数页、个人中心、登录页）均已接入。
+
+右下角悬浮按钮，优先显示 Lottie 动图，失败时回退为文字按钮。
+
+9.2 后端接口
+POST /api/ai/customer-service
+
+优先使用远程模型（OpenRouter / Claude / Qwen）
+
+环境变量：AI_CHAT_API_KEY, AI_CHAT_API_BASE, AI_CHAT_MODEL
+
+远程不可用时自动降级为本地文档问答（基于 docs/ 下的项目文档摘要）
+
+9.3 页面场景化欢迎语
+首页：产品功能与工作台入口
+
+报价页：报价、识图、参数计算
+
+历史页：历史搜索、复用、详情
+
+交易页：发布、库存、供需信息
+
+参数页：材料、表面处理、焊接、孔类配置
+
+个人中心：账号、角色、权限、快捷入口
+
+9.4 部署排查要点
+确认 /在线客服.lottie 文件可访问
+
+确认后端日志无 401/403 错误
+
+若客服一直走本地兜底，检查 AI_CHAT_API_KEY 是否配置且有效
+
+10. 项目实施方案与预算
+10.1 实施阶段与周期
+阶段	周期	主要任务
+需求梳理与架构确认	3~5 天	功能清单、字段清单、接口定义、角色权限
+数据库与后端补全	5~8 天	补齐表字段、统一索引、审计日志、参数字典
+核心业务链路完善	7~12 天	报价页交互、识图回填、计算逻辑、历史查询、客户绑定
+交易市场与沟通模块完善	5~8 天	商品发布、筛选、留言功能
+上线与试运营	5~10 天	Bug 修复、响应式优化、备案、测试环境、内部试运行
+总周期：3～6 周
+
+10.2 开发预算（首期上线）
+域名 + 备案 + 证书：500～1000 元
+
+服务器 + 存储首月：300～1,500 元
+
+微信认证预留：600 元（服务号+小程序）
+
+研发补充开发（UI/功能完善、导出分享等）仅按token消耗计算：3000-5000  元
+
+首期合计：约 4400～8100 元
+
+10.3 持续运营成本（月度）
+服务器：200～800 元
+
+数据库：0～500 元
+
+对象存储：20～200 元
+
+短信/验证码：50～500 元
+
+推广投放：1,000～20,000 元
+
+10.4 推广建议
+内部试用（免费） → 小范围转介绍 → 正式获客（投放+内容营销）
+
+推荐奖励机制：邀请码 → 推荐人获得免费查询次数，老板后台可调整奖励规则。
+
+初期月推广预算：2,000～15,000 元。
+
+11. 附录
+11.1 环境变量完整示例
+env
+# 基础
+VEKUS_ENV=production
+VEKUS_HOST=0.0.0.0
+VEKUS_PORT=8000
+VEKUS_STORAGE_DIR=backend/storage/uploads
+VEKUS_CORS_ORIGINS=https://vekus.qzz.io
+
+# AI 处理器
+VEKUS_AI_PROVIDER=claude
+VEKUS_AI_API_KEY=sk-ant-xxx
+VEKUS_AI_BASE_URL=https://api.anthropic.com
+
+# AI 客服
+AI_CHAT_API_KEY=sk-or-v1-xxx
+AI_CHAT_API_BASE=https://openrouter.ai/api/v1/chat/completions
+AI_CHAT_MODEL=openai/gpt-4o-mini
+AI_CHAT_HTTP_REFERER=https://vekus.qzz.io
+AI_CHAT_TITLE=Vekus智能助手
+11.2 种子数据（pricing_parameters 初始化示例）
+category	name	value	unit	common	enabled
+material	SPCC	5.2	元/kg	1	1
+material	SUS304	18.5	元/kg	1	1
+surface	喷粉	25	元/m²	1	1
+surface	镀锌	18	元/m²	0	1
+welding	点焊	0.5	元/点	1	1
+hole	光孔	0.8	元/个	1	1
+hole	螺纹孔	2.0	元/个	0	1
+11.3 通用错误码规范
+状态码	含义
+200	成功
+400	请求参数错误
+401	未授权（token 失效）
+403	无权限
+404	资源不存在
+500	服务器内部错误
+12. 总结
+本文档完整描述了 Vekus 钣金 AI 报价系统的架构设计、识别规则、数据模型、报价逻辑、部署方式、UI 规范以及实施计划。系统已具备从图纸上传到报价生成、客户管理、交易撮合和 AI 客服的全链路能力，并且支持桌面端与移动端统一体验。后续可根据实际运营反馈迭代优化，逐步引入微信生态、多租户、高级 BI 等能力。
+
+文档版本：1.0
+最后更新：2026-04-29
+维护者：Vekus 开发团队
+

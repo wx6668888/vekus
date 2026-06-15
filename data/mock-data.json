@@ -1,0 +1,59 @@
+{
+  "health": {
+    "ok": true,
+    "service": "vekus-preview",
+    "version": "0.1.0"
+  },
+  "quotePreview": {
+    "quoteId": "Q-20260510-001",
+    "customer": "华南精工",
+    "material": "镀锌板",
+    "thickness": "1.5 mm",
+    "quantity": 500,
+    "amount": "¥ 12,480",
+    "status": "草稿中"
+  },
+  "histories": [
+    {
+      "id": "HX-20260510-01",
+      "customer": "华南精工",
+      "status": "已成交",
+      "amount": "¥ 8,200"
+    },
+    {
+      "id": "HX-20260509-04",
+      "customer": "深蓝机电",
+      "status": "待确认",
+      "amount": "¥ 12,480"
+    },
+    {
+      "id": "HX-20260508-11",
+      "customer": "晨星设备",
+      "status": "已失单",
+      "amount": "¥ 6,900"
+    }
+  ],
+  "customers": [
+    {
+      "name": "华南精工",
+      "level": "A",
+      "quotes": 12
+    },
+    {
+      "name": "深蓝机电",
+      "level": "B",
+      "quotes": 7
+    },
+    {
+      "name": "晨星设备",
+      "level": "C",
+      "quotes": 3
+    }
+  ],
+  "stats": {
+    "quoteCount": 128,
+    "pendingCount": 24,
+    "conversionRate": "36.8%",
+    "customerCount": 1248
+  }
+}

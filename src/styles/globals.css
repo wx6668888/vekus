@@ -1,0 +1,25 @@
+/* Utility Classes */
+.vk-text { color: var(--text); }
+.vk-text-muted { color: var(--text-muted); }
+.vk-text-faint { color: var(--text-faint); }
+.vk-text-brand { color: var(--brand); }
+.vk-text-accent { color: var(--accent); }
+.vk-text-success { color: var(--success); }
+.vk-text-info { color: var(--info); }
+.vk-text-warn { color: var(--warn); }
+.vk-text-danger { color: var(--danger); }
+
+.vk-font-mono { font-family: var(--font-mono); }
+
+.vk-fz-display { font-size: var(--fz-display); font-weight: var(--fw-bold); line-height: var(--lh-tight); }
+.vk-fz-h1 { font-size: var(--fz-h1); font-weight: var(--fw-bold); line-height: var(--lh-normal); }
+.vk-fz-h2 { font-size: var(--fz-h2); font-weight: var(--fw-semibold); line-height: var(--lh-normal); }
+.vk-fz-h3 { font-size: var(--fz-h3); font-weight: var(--fw-semibold); line-height: var(--lh-relaxed); }
+.vk-fz-body { font-size: var(--fz-body); line-height: var(--lh-loose); }
+.vk-fz-sm { font-size: var(--fz-sm); font-weight: var(--fw-medium); line-height: var(--lh-relaxed); }
+.vk-fz-xs { font-size: var(--fz-xs); font-weight: var(--fw-semibold); line-height: var(--lh-relaxed); }
+
+.vk-bg { background: var(--bg); }
+.vk-surface { background: var(--surface); }
+.vk-sunken { background: var(--surface-sunken); }
+.vk-blueprint { background: var(--surface-blueprint); }

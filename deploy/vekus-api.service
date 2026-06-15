@@ -1,0 +1,28 @@
+[Unit]
+Description=Vekus API Service
+After=network.target
+
+[Service]
+Type=forking
+User=www-data
+Group=www-data
+WorkingDirectory=/data/www/vekus
+EnvironmentFile=/data/www/vekus/.env
+ExecStart=/bin/bash -c '\
+  /data/www/vekus/venv/bin/python -m uvicorn backend.app.main:app \
+    --host 127.0.0.1 --port 8001 --workers 1 & \
+  /data/www/vekus/venv/bin/python -m uvicorn backend.app.main:app \
+    --host 127.0.0.1 --port 8002 --workers 1 & \
+  /data/www/vekus/venv/bin/python -m uvicorn backend.app.main:app \
+    --host 127.0.0.1 --port 8003 --workers 1 & \
+  /data/www/vekus/venv/bin/python -m uvicorn backend.app.main:app \
+    --host 127.0.0.1 --port 8004 --workers 1 & \
+  wait'
+ExecStop=/bin/bash -c 'pkill -f "uvicorn backend.app.main"'
+ExecReload=/bin/bash -c 'pkill -HUP -f "uvicorn backend.app.main"'
+Restart=on-failure
+RestartSec=5
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target
