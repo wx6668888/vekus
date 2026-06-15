@@ -47,15 +47,11 @@
       <div class="marketplace-view__extra-filters">
         <div class="marketplace-view__region-select-wrap">
           <MapPin :size="14" class="marketplace-view__region-icon" />
-          <select v-model="activeRegion" class="marketplace-view__region-select" @change="fetchListings">
-            <option v-for="r in regions" :key="r.value" :value="r.value">{{ r.label }}</option>
-          </select>
+          <SelectMenu v-model="activeRegion" :options="regions" @update:model-value="fetchListings()" />
         </div>
         <div class="marketplace-view__sort">
           <span class="marketplace-view__sort-label">排序：</span>
-          <select v-model="sortBy" class="marketplace-view__sort-select" @change="fetchListings">
-            <option v-for="s in sortOptions" :key="s.value" :value="s.value">{{ s.label }}</option>
-          </select>
+          <SelectMenu v-model="sortBy" :options="sortOptions" @update:model-value="fetchListings()" />
         </div>
       </div>
 
@@ -106,6 +102,7 @@ import MobileNav from '@/components/layout/MobileNav.vue';
 import Button from '@/components/base/Button.vue';
 import Input from '@/components/base/Input.vue';
 import EmptyState from '@/components/base/EmptyState.vue';
+import SelectMenu from '@/components/base/SelectMenu.vue';
 import ListingCard from '@/components/quote/ListingCard.vue';
 import { listMarketplace, type Listing } from '@/api/marketplace';
 

@@ -34,13 +34,7 @@
             </button>
           </div>
           <div class="customers-view__sort-wrap">
-            <select v-model="sortBy" class="customers-view__sort">
-              <option value="default">默认排序</option>
-              <option value="amount-desc">成交额 ↓</option>
-              <option value="amount-asc">成交额 ↑</option>
-              <option value="time-desc">最近添加</option>
-              <option value="time-asc">最早添加</option>
-            </select>
+            <SelectMenu v-model="sortBy" :options="sortOptions" />
           </div>
         </div>
         <Input
@@ -111,6 +105,7 @@ import Button from '@/components/base/Button.vue';
 import Input from '@/components/base/Input.vue';
 import Card from '@/components/base/Card.vue';
 import Badge from '@/components/base/Badge.vue';
+import SelectMenu from '@/components/base/SelectMenu.vue';
 import { api } from '@/api';
 
 interface CustomerItem {
@@ -144,6 +139,14 @@ const statusFilters = [
   { value: 'all', label: '全部' },
   { value: 'won', label: '已成交' },
   { value: 'pending', label: '未成交' },
+];
+
+const sortOptions = [
+  { value: 'default', label: '默认排序' },
+  { value: 'amount-desc', label: '成交额 ↓' },
+  { value: 'amount-asc', label: '成交额 ↑' },
+  { value: 'time-desc', label: '最近添加' },
+  { value: 'time-asc', label: '最早添加' },
 ];
 
 onMounted(() => fetchCustomers());

@@ -31,23 +31,12 @@
             <Input v-model.number="draft.basics.quantity" type="number" label="数量" placeholder="500" />
             <div class="quote-form__select">
               <label class="vk-input__label">材料</label>
-              <select v-model="draft.basics.material" class="vk-input__field">
-                <option value="镀锌板">镀锌板</option>
-                <option value="冷轧板">冷轧板</option>
-                <option value="铝板">铝板</option>
-                <option value="不锈钢">不锈钢</option>
-              </select>
+              <SelectMenu v-model="draft.basics.material" :options="materialOptions" />
             </div>
             <Input v-model.number="draft.basics.thickness" type="number" step="0.1" label="厚度 (mm)" placeholder="1.5" />
             <div class="quote-form__select">
               <label class="vk-input__label">表面处理</label>
-              <select v-model="draft.basics.surface" class="vk-input__field">
-                <option value="喷粉">喷粉</option>
-                <option value="喷漆">喷漆</option>
-                <option value="电镀">电镀</option>
-                <option value="钝化">钝化</option>
-                <option value="无">无</option>
-              </select>
+              <SelectMenu v-model="draft.basics.surface" :options="surfaceOptions" />
             </div>
             <Input v-model.number="draft.basics.deliveryDays" type="number" label="交期 (天)" placeholder="7" />
           </div>
@@ -177,6 +166,7 @@ import Card from '@/components/base/Card.vue';
 import Input from '@/components/base/Input.vue';
 import Button from '@/components/base/Button.vue';
 import Badge from '@/components/base/Badge.vue';
+import SelectMenu from '@/components/base/SelectMenu.vue';
 import PriceDisplay from '@/components/data/PriceDisplay.vue';
 import { FileDropzone, RecognizedFieldList } from '@/components/quote';
 import CustomerPicker from '@/components/quote/CustomerPicker.vue';
@@ -193,6 +183,21 @@ const lastSaved = ref<number | null>(null);
 const savedId = ref<string | null>(null);
 
 const steps = ['基础信息', '上传识图', '确认报价'];
+
+const materialOptions = [
+  { value: '镀锌板', label: '镀锌板' },
+  { value: '冷轧板', label: '冷轧板' },
+  { value: '铝板', label: '铝板' },
+  { value: '不锈钢', label: '不锈钢' },
+];
+
+const surfaceOptions = [
+  { value: '喷粉', label: '喷粉' },
+  { value: '喷漆', label: '喷漆' },
+  { value: '电镀', label: '电镀' },
+  { value: '钝化', label: '钝化' },
+  { value: '无', label: '无' },
+];
 
 const breakdownLabels: Record<string, string> = {
   material: '材料费', cutting: '切割费', bending: '折弯费',

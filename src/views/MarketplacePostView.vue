@@ -25,13 +25,7 @@
 
           <div class="post-view__select">
             <label class="vk-input__label">分类</label>
-            <select v-model="form.category" class="vk-input__field">
-              <option value="板材">板材</option>
-              <option value="型材">型材</option>
-              <option value="余料">余料</option>
-              <option value="设备">设备</option>
-              <option value="加工服务">加工服务</option>
-            </select>
+            <SelectMenu v-model="form.category" :options="categoryOptions" />
           </div>
 
           <div class="post-view__row">
@@ -116,6 +110,7 @@ import Card from '@/components/base/Card.vue';
 import Input from '@/components/base/Input.vue';
 import Button from '@/components/base/Button.vue';
 import Badge from '@/components/base/Badge.vue';
+import SelectMenu from '@/components/base/SelectMenu.vue';
 import { createListing, type CreateListingData } from '@/api/marketplace';
 import { scanDrawing } from '@/api/quote';
 
@@ -145,6 +140,14 @@ const form = reactive<CreateListingData>({
   location: '',
   contactPhone: '',
 });
+
+const categoryOptions = [
+  { value: '板材', label: '板材' },
+  { value: '型材', label: '型材' },
+  { value: '余料', label: '余料' },
+  { value: '设备', label: '设备' },
+  { value: '加工服务', label: '加工服务' },
+];
 
 function onAiFileSelect(e: Event) {
   const target = e.target as HTMLInputElement;

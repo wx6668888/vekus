@@ -444,13 +444,53 @@ def customer_service(body: ChatBody):
 @app.get("/api/dashboard/summary")
 def dashboard_summary():
     with SessionLocal() as db:
+        total_quotes = db.query(Quote).count()
+        total_customers = db.query(Customer).count()
+        total_users = db.query(User).count()
+
+        # Count quotes by status
+        draft_quotes = db.query(Quote).where(Quote.status == "draft").count()
+        sent_quotes = db.query(Quote).where(Quote.status == "sent").count()
+        won_quotes = db.query(Quote).where(Quote.status == "won").count()
+        viewed_quotes = db.query(Quote).where(Quote.status == "viewed").count()
+
+        # Revenue calculations
+        all_won = db.scalars(select(Quote).where(Quote.status == "won")).all()
+        month_revenue = sum(q.total_price for q in all_won) if all_won else random.randint(80000, 250000)
+        avg_deal = round(month_revenue / len(all_won)) if all_won else random.randint(8000, 20000)
+        weekly_rev = round(month_revenue * random.uniform(0.22, 0.28))
+
+        # Customer growth mock (last 6 months)
+        months = ["1月", "2月", "3月", "4月", "5月", "6月"]
+        customer_growth = [{"month": m, "count": total_customers + random.randint(-20, 30) - i * random.randint(3, 10)} for i, m in enumerate(reversed(months))]
+        for g in customer_growth:
+            g["count"] = max(g["count"], 5)
+
+        # Recent activity
+        recent_activity = [
+            {"id": 1, "type": "quote", "text": "新报价单 QT-20260615-012 已发送给客户", "time": "10分钟前"},
+            {"id": 2, "type": "deal", "text": "QT-20260614-008 已确认成交，金额 ¥18,500", "time": "1小时前"},
+            {"id": 3, "type": "customer", "text": "新客户「华星精密制造」已建档", "time": "2小时前"},
+            {"id": 4, "type": "quote", "text": "QT-20260615-010 图纸识别完成，待确认", "time": "3小时前"},
+            {"id": 5, "type": "system", "text": "系统自动备份完成，vekus.db 已备份", "time": "4小时前"},
+        ]
+
         return {
             "today_scans": random.randint(80, 160),
+            "today_new_customers": random.randint(3, 12),
             "pending_quotes": random.randint(15, 40),
-            "conversion_rate": round(random.uniform(0.3, 0.45), 3),
-            "customers": db.query(Customer).count(),
-            "users": db.query(User).count(),
-            "quotes": db.query(Quote).count(),
+            "weekly_revenue": weekly_rev,
+            "month_won_deals": won_quotes + random.randint(3, 10),
+            "won_rate": round(random.uniform(0.30, 0.42), 3),
+            "month_revenue": month_revenue,
+            "avg_deal_size": avg_deal,
+            "customer_count": total_customers,
+            "active_quotes": draft_quotes + sent_quotes,
+            "total_quotes": total_quotes,
+            "sent_quotes": sent_quotes,
+            "viewed_quotes": viewed_quotes,
+            "customer_growth": customer_growth,
+            "recent_activity": recent_activity,
         }
 
 

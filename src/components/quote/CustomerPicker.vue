@@ -47,11 +47,7 @@
         <Input v-model="newCustomer.phone" label="电话" placeholder="联系电话" />
         <div class="quote-form__select">
           <label class="vk-input__label">客户等级</label>
-          <select v-model="newCustomer.tier" class="vk-input__field">
-            <option value="B">B级（普通）</option>
-            <option value="A">A级（VIP）</option>
-            <option value="C">C级（新客户）</option>
-          </select>
+          <SelectMenu v-model="newCustomer.tier" :options="tierOptions" />
         </div>
       </div>
       <Input v-model="newCustomer.address" label="地址" placeholder="选填" />
@@ -69,6 +65,7 @@ import { ChevronDown, Plus } from 'lucide-vue-next';
 import Input from '../base/Input.vue';
 import Button from '../base/Button.vue';
 import Badge from '../base/Badge.vue';
+import SelectMenu from '../base/SelectMenu.vue';
 import { api } from '@/api';
 import { createCustomer } from '@/api/customer';
 
@@ -87,6 +84,12 @@ const selectedCustomer = ref<CustomerItem | null>(null);
 const customers = ref<CustomerItem[]>([]);
 const pickerRef = ref<HTMLElement | null>(null);
 const newCustomer = ref({ name: '', contactName: '', phone: '', tier: 'B', address: '' });
+
+const tierOptions = [
+  { value: 'A', label: 'A级（VIP）' },
+  { value: 'B', label: 'B级（普通）' },
+  { value: 'C', label: 'C级（新客户）' },
+];
 
 let searchTimer: ReturnType<typeof setTimeout> | null = null;
 
