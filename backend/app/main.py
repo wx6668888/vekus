@@ -1685,6 +1685,66 @@ def audit_list(limit: int = 100):
                  "detail":r.detail,"ipAddress":r.ip_address,"createdAt":r.created_at} for r in rows]
 
 
+# ═══════════════════ Document Management ═══════════════════
+
+import shutil
+DOC_STORAGE = Path(os.getenv("VEKUS_STORAGE_DIR", "storage/uploads"))
+DOC_STORAGE.mkdir(parents=True, exist_ok=True)
+
+# Simple doc registry using a JSON file
+DOC_REGISTRY = DOC_STORAGE / "registry.json"
+
+def _load_docs():
+    if DOC_REGISTRY.exists():
+        return json.loads(DOC_REGISTRY.read_text())
+    return []
+
+def _save_docs(docs):
+    DOC_REGISTRY.write_text(json.dumps(docs, ensure_ascii=False, indent=2))
+
+@app.get("/api/docs")
+def docs_list():
+    return _load_docs()
+
+@app.post("/api/docs/upload")
+async def docs_upload(file: UploadFile = File(...)):
+    docs = _load_docs()
+    doc_id = str(uuid.uuid4())[:8]
+    ext = Path(file.filename).suffix if file.filename else ""
+    saved_name = f"{doc_id}{ext}"
+    saved_path = DOC_STORAGE / saved_name
+    with open(saved_path, "wb") as f:
+        content = await file.read()
+        f.write(content)
+    doc = {
+        "id": doc_id, "fileName": file.filename, "fileType": ext.lstrip("."),
+        "fileSize": len(content), "customerName": "", "version": "1.0",
+        "createdAt": now_str(), "path": str(saved_path),
+    }
+    docs.insert(0, doc)
+    _save_docs(docs)
+    return doc
+
+@app.get("/api/files/{doc_id}/download")
+def docs_download(doc_id: str):
+    docs = _load_docs()
+    doc = next((d for d in docs if d["id"] == doc_id), None)
+    if not doc: raise HTTPException(404, "Not found")
+    from fastapi.responses import FileResponse
+    return FileResponse(doc["path"], filename=doc["fileName"])
+
+@app.delete("/api/docs/{doc_id}")
+def docs_delete(doc_id: str):
+    docs = _load_docs()
+    doc = next((d for d in docs if d["id"] == doc_id), None)
+    if doc:
+        try: os.remove(doc["path"])
+        except: pass
+        docs = [d for d in docs if d["id"] != doc_id]
+        _save_docs(docs)
+    return {"ok": True}
+
+
 @app.get("/api/health")
 def health():
     return {"status": "ok", "service": "vekus-api", "version": "0.2.0"}

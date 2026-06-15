@@ -10,6 +10,10 @@
           <Button variant="secondary" size="sm" @click="exportExcel" class="mr-2">
             <Download :size="14" class="mr-1" /> 导出
           </Button>
+          <label class="bom-view__action" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px;margin-right:8px">
+            <Upload :size="14" /> 导入
+            <input type="file" accept=".xlsx,.xls" style="display:none" @change="importExcel" />
+          </label>
           <Button variant="primary" @click="showAddDialog = true">新增客户</Button>
         </template>
       </TopBar>
@@ -161,7 +165,7 @@ import Card from '@/components/base/Card.vue';
 import Badge from '@/components/base/Badge.vue';
 import SelectMenu from '@/components/base/SelectMenu.vue';
 import { api } from '@/api';
-import { Download } from 'lucide-vue-next';
+import { Download, Upload } from 'lucide-vue-next';
 import * as XLSX from 'xlsx';
 
 interface CustomerItem {
@@ -283,6 +287,33 @@ const filteredCustomers = computed(() => {
 function getTierVariant(tier: string) {
   const variants: Record<string, any> = { A: 'success', B: 'info', C: 'default' };
   return variants[tier] || 'default';
+}
+
+async function importExcel(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0];
+  if (!file) return;
+  const data = await file.arrayBuffer();
+  const wb = XLSX.read(data);
+  const rows = XLSX.utils.sheet_to_json<any>(wb.Sheets[wb.SheetNames[0]]);
+  let count = 0;
+  for (const r of rows) {
+    if (!r['客户名称'] && !r.name) continue;
+    try {
+      await api.post('/customers', {
+        name: r['客户名称'] || r.name || '',
+        contactName: r['联系人'] || r.contactName || '',
+        phone: String(r['电话'] || r.phone || ''),
+        email: r['邮箱'] || r.email || '',
+        address: r['地址'] || r.address || '',
+        tier: r['等级'] || r.tier || 'B',
+        tags: (r['标签'] || r.tags || '').toString().split(/[,，]/).filter(Boolean),
+      });
+      count++;
+    } catch { /* skip */ }
+  }
+  alert(`成功导入 ${count} 个客户`);
+  fetchCustomers();
+  (e.target as HTMLInputElement).value = '';
 }
 
 function exportExcel() {
