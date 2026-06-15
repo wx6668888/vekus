@@ -220,15 +220,27 @@ function toggleExpand(id: string) {
   expanded.value = new Set(expanded.value); // trigger reactivity
 }
 
-function autoExpand(level = 0) {
-  expanded.value = new Set(allItems.value.filter(i => i.level === level && i.category === '组件' && (i.children?.length || 0) > 0).map(i => i.id));
+function autoExpand() {
+  // Expand all parent items that have children in the built tree
+  const tree = buildTree(allItems.value);
+  const toExpand = new Set<string>();
+  function walk(nodes: BomNode[]) {
+    for (const n of nodes) {
+      if (n.children && n.children.length > 0) {
+        toExpand.add(n.id);
+        walk(n.children);
+      }
+    }
+  }
+  walk(tree);
+  expanded.value = toExpand;
 }
 
 onMounted(async () => {
   const res = await api.get<BomNode[]>('/bom/tree');
   if (res.data) allItems.value = res.data;
   loading.value = false;
-  autoExpand(0);
+  autoExpand();
 });
 
 function openCreate(parentId: number, level: number, category: string) {
@@ -260,7 +272,7 @@ async function saveItem() {
   showDialog.value = false;
   const res = await api.get<BomNode[]>('/bom/tree');
   if (res.data) allItems.value = res.data;
-  autoExpand(0);
+  autoExpand();
 }
 
 async function doDelete(item: BomNode) {
