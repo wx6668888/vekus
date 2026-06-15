@@ -11,6 +11,10 @@
           <LayoutDashboard :size="17" /><span>看板</span>
         </router-link>
 
+        <router-link to="/quote" class="vk-topnav__item" :class="{ active: isActive('/quote') }">
+          <FileText :size="17" /><span>报价</span>
+        </router-link>
+
         <!-- 生产 -->
         <div class="vk-dd" @mouseenter="open='production'" @mouseleave="open=''">
           <button :class="['vk-topnav__item', { active: isMenuActive('production') }]">
@@ -68,10 +72,6 @@
         <router-link to="/messages" class="vk-topnav__item" :class="{ active: isActive('/messages') }">
           <MessageSquare :size="17" /><span>消息</span>
         </router-link>
-
-        <router-link to="/settings" class="vk-topnav__item" :class="{ active: isActive('/settings') }">
-          <Settings :size="17" /><span>设置</span>
-        </router-link>
       </nav>
 
       <div class="vk-topnav__user" @click="$router.push('/me')">
@@ -105,7 +105,7 @@ const productionSmall = [
 ];
 
 const businessBig = [
-  { path: '/quote', label: '智能报价', icon: FileText },
+  { path: '/settings', label: '系统设置', icon: Settings },
   { path: '/customers', label: '客户管理', icon: Users },
   { path: '/marketplace', label: '交易广场', icon: ShoppingBag },
 ];
@@ -126,6 +126,7 @@ function isActive(path: string) {
   if (path === '/marketplace' && route.path.startsWith('/marketplace')) return true;
   if (path === '/messages' && route.path.startsWith('/messages')) return true;
   if (path === '/customers' && route.path.startsWith('/customers')) return true;
+  if (path === '/settings' && route.path.startsWith('/settings')) return true;
   return route.path === path;
 }
 function isMenuActive(menu: string) {

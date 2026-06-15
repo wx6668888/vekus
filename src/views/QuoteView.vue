@@ -347,250 +347,269 @@ onMounted(async () => {
 
 <style scoped>
 .quote-view {
-  display: grid;
-  display: block;
   min-height: 100vh;
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
 }
 
 .quote-view__main {
-  padding: 24px 32px 120px;
-  overflow-y: auto;
-  max-width: 720px;
+  padding: 28px 32px 120px;
+  max-width: 780px;
   margin: 0 auto;
 }
 
-/* Step indicator */
+/* ===== Step Indicator ===== */
 .quote-view__steps {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0;
-  margin-bottom: 32px;
-  padding: 0 24px;
+  margin-bottom: 36px;
+  padding: 20px 32px;
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.04);
 }
-
 .quote-view__step {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: var(--fz-sm);
-  color: var(--text-muted);
+  gap: 10px;
+  font-size: 14px;
+  color: #94a3b8;
+  font-weight: 500;
 }
-
 .quote-view__step-num {
-  width: 28px;
-  height: 28px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   display: grid;
   place-items: center;
-  font-size: 12px;
-  font-weight: var(--fw-bold);
-  background: var(--surface-sunken);
-  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 700;
+  background: #f1f5f9;
+  color: #94a3b8;
   flex-shrink: 0;
+  transition: all 0.3s cubic-bezier(0.16,1,0.3,1);
 }
-
 .quote-view__step--active .quote-view__step-num {
-  background: var(--brand);
-  color: white;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(59,130,246,0.35);
 }
-
 .quote-view__step--done .quote-view__step-num {
-  background: var(--success);
-  color: white;
+  background: #16a34a;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(22,163,74,0.25);
 }
-
 .quote-view__step--active .quote-view__step-label {
-  color: var(--text);
-  font-weight: var(--fw-semibold);
+  color: #0f172a;
+  font-weight: 600;
 }
-
 .quote-view__step--done .quote-view__step-label {
-  color: var(--success);
+  color: #16a34a;
 }
-
 .quote-view__step-line {
-  width: 40px;
+  width: 48px;
   height: 2px;
-  background: var(--border);
-  margin: 0 12px;
+  background: #e2e8f0;
+  margin: 0 16px;
   flex-shrink: 0;
+  border-radius: 1px;
+  transition: background 0.3s ease;
 }
-
 .quote-view__step--done + .quote-view__step-line,
 .quote-view__step--done .quote-view__step-line {
-  background: var(--success);
+  background: #16a34a;
 }
 
-/* Panel */
+/* ===== Panel ===== */
 .quote-view__panel {
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
 
+/* ===== Card Overrides ===== */
 .quote-form__section {
-  padding: 24px;
+  padding: 28px;
+  border-radius: 20px !important;
+  background: #fff;
+  border: 1px solid rgba(0,0,0,0.04);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.03), 0 8px 24px rgba(0,0,0,0.04);
+  transition: all 0.3s ease;
 }
-
 .quote-form__section-title {
-  font-size: var(--fz-h3);
-  font-weight: var(--fw-semibold);
-  color: var(--text);
-  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 6px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  letter-spacing: -0.01em;
 }
-
 .quote-form__section-desc {
-  font-size: var(--fz-sm);
-  color: var(--text-muted);
-  margin: 0 0 20px;
+  font-size: 13px;
+  color: #94a3b8;
+  margin: 0 0 22px;
+  line-height: 1.5;
 }
-
 .quote-form__grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+  gap: 14px;
   margin-bottom: 16px;
 }
-
 .quote-form__select {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
-
 .quote-form__select select {
   height: 48px;
   padding: 0 14px;
-  border-radius: var(--r-input);
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text);
-  font-size: var(--fz-body);
+  border-radius: 12px;
+  border: 1.5px solid #e2e8f0;
+  background: #f8fafc;
+  color: #0f172a;
+  font-size: 14px;
   cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
 }
-
+.quote-form__select select:focus {
+  border-color: #3b82f6;
+  background: #fff;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.08);
+}
 .quote-form__actions {
   display: flex;
   justify-content: center;
   gap: 12px;
-  margin-top: 24px;
+  margin-top: 28px;
 }
 
-/* Scanning animation */
+/* ===== Scanning Animation ===== */
 .quote-view__scanning {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 40px 20px;
+  padding: 48px 20px;
   text-align: center;
 }
-
 .quote-view__scan-animation {
   position: relative;
-  width: 80px;
-  height: 80px;
+  width: 88px;
+  height: 88px;
   display: grid;
   place-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
-
 .quote-view__scan-ring {
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  border: 3px solid var(--border);
-  border-top-color: var(--brand);
-  animation: spin 1s linear infinite;
+  border: 3px solid #e2e8f0;
+  border-top-color: #3b82f6;
+  animation: spin 0.8s linear infinite;
 }
-
 @keyframes spin { to { transform: rotate(360deg); } }
-
 .quote-view__scan-icon {
-  color: var(--brand);
-  animation: pulse 1.5s ease-in-out infinite;
+  color: #3b82f6;
+  animation: pulse 1.8s ease-in-out infinite;
 }
-
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.9); }
 }
-
 .quote-view__scan-text {
-  font-size: var(--fz-h3);
-  font-weight: var(--fw-semibold);
-  color: var(--text);
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
   margin: 0 0 8px;
 }
-
 .quote-view__scan-sub {
-  font-size: var(--fz-sm);
-  color: var(--text-muted);
+  font-size: 13px;
+  color: #94a3b8;
   margin: 0;
 }
 
-/* Summary */
+/* ===== Summary ===== */
 .quote-view__summary {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 16px;
-  background: var(--surface-sunken);
-  border-radius: var(--r-input);
-  margin-bottom: 20px;
+  gap: 8px;
+  padding: 20px;
+  background: #f8fafc;
+  border-radius: 14px;
+  margin-bottom: 24px;
+  border: 1px solid #f1f5f9;
 }
-
 .quote-view__summary-row {
   display: flex;
   justify-content: space-between;
-  font-size: var(--fz-body);
+  font-size: 14px;
+  padding: 4px 0;
 }
+.quote-view__summary-row span { color: #64748b; }
+.quote-view__summary-row strong { color: #0f172a; font-weight: 600; }
 
-.quote-view__summary-row span { color: var(--text-muted); }
-.quote-view__summary-row strong { color: var(--text); }
-
+/* ===== Total - Hero Number ===== */
 .quote-view__total {
   text-align: center;
-  padding: 20px 0;
-  margin-bottom: 16px;
+  padding: 28px 0 20px;
+  margin-bottom: 20px;
+  position: relative;
 }
-
+.quote-view__total::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(59,130,246,0.05), transparent 70%);
+  pointer-events: none;
+}
 .quote-view__total-label {
-  font-size: var(--fz-sm);
-  color: var(--text-muted);
-  margin-bottom: 8px;
+  font-size: 13px;
+  color: #64748b;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
 }
-
 .quote-view__total-sub {
-  font-size: var(--fz-sm);
-  color: var(--text-muted);
-  margin-top: 8px;
+  font-size: 13px;
+  color: #94a3b8;
+  margin-top: 10px;
+  font-weight: 500;
 }
 
+/* ===== Breakdown ===== */
 .quote-view__breakdown-mini {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 16px;
-  background: var(--surface-sunken);
-  border-radius: var(--r-input);
+  padding: 20px;
+  background: #f8fafc;
+  border-radius: 14px;
+  border: 1px solid #f1f5f9;
 }
-
 .quote-view__breakdown-row {
   display: flex;
   justify-content: space-between;
-  font-size: var(--fz-body);
+  font-size: 14px;
+  padding: 2px 0;
 }
+.quote-view__breakdown-row span { color: #64748b; }
 
-.quote-view__breakdown-row span { color: var(--text-muted); }
-
-/* System params display */
+/* ===== System Params ===== */
 .quote-view__params-empty {
-  font-size: var(--fz-sm);
-  color: var(--text-muted);
+  font-size: 13px;
+  color: #94a3b8;
   text-align: center;
   padding: 20px;
 }
