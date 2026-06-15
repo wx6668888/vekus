@@ -165,14 +165,6 @@
         </div>
       </div>
 
-      <!-- Mobile floating bar (shown only when price available) -->
-      <div v-if="calculated.totalPrice > 0" class="quote-view__mobile-bar">
-        <div class="quote-view__mobile-bar-price">
-          <span class="quote-view__mobile-bar-label">总价</span>
-          <PriceDisplay :value="calculated.totalPrice" size="md" />
-        </div>
-        <Button variant="primary" size="lg" class="quote-view__mobile-bar-btn" @click="currentStep = 2; sendQuote()">发送报价</Button>
-      </div>
     </main>
 
     <MobileNav />
