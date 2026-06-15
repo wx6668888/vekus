@@ -1620,6 +1620,71 @@ def quality_delete(qc_id: int):
         return {"ok":True}
 
 
+# ═══════════════════ Approvals ═══════════════════
+
+from .models import Approval
+
+def serialize_approval(row: Approval) -> dict:
+    return {"id":str(row.id),"approvalNo":row.approval_no,"entityType":row.entity_type,
+            "entityId":row.entity_id,"entityTitle":row.entity_title,
+            "applicant":row.applicant,"approver":row.approver,"status":row.status,
+            "comment":row.comment,"createdAt":row.created_at,"updatedAt":row.updated_at}
+
+@app.get("/api/approvals")
+def approval_list(status: str = "", entity_type: str = ""):
+    with SessionLocal() as db:
+        stmt = select(Approval).order_by(Approval.id.desc())
+        if status: stmt = stmt.where(Approval.status == status)
+        if entity_type: stmt = stmt.where(Approval.entity_type == entity_type)
+        rows = db.scalars(stmt).all()
+        return [serialize_approval(r) for r in rows]
+
+@app.post("/api/approvals")
+def approval_create(data: dict):
+    with SessionLocal() as db:
+        no = f"AP-{datetime.now().strftime('%Y%m%d')}-{random.randint(100,999)}"
+        row = Approval(approval_no=no,entity_type=data.get("entityType","quote"),
+            entity_id=str(data.get("entityId","")),entity_title=data.get("entityTitle",""),
+            applicant=data.get("applicant",""),approver=data.get("approver",""),
+            status="pending",comment=data.get("comment",""),created_at=now_str(),updated_at=now_str())
+        db.add(row); db.commit(); db.refresh(row)
+        _audit(db, data.get("applicant",""),"approve","approval",str(row.id),f"提交审批: {row.entity_title}")
+        return serialize_approval(row)
+
+@app.put("/api/approvals/{ap_id}")
+def approval_update(ap_id: int, data: dict):
+    with SessionLocal() as db:
+        row = db.get(Approval, ap_id)
+        if not row: raise HTTPException(404,"Not found")
+        old_status = row.status
+        for f in ["status","comment","approver"]:
+            if f in data: setattr(row, f, data[f])
+        row.updated_at = now_str()
+        db.commit(); db.refresh(row)
+        if old_status != row.status:
+            _audit(db, row.approver,"approve","approval",str(row.id),
+                   f"{'通过' if row.status=='approved' else '驳回'}审批: {row.entity_title}")
+        return serialize_approval(row)
+
+
+# ═══════════════════ Audit Logs ═══════════════════
+
+from .models import AuditLog
+
+def _audit(db, user_name: str, action: str, target_type: str, target_id: str, detail: str):
+    db.add(AuditLog(user_name=user_name,action=action,target_type=target_type,
+        target_id=target_id,detail=detail,ip_address="",created_at=now_str()))
+    db.commit()
+
+@app.get("/api/audit-logs")
+def audit_list(limit: int = 100):
+    with SessionLocal() as db:
+        rows = db.scalars(select(AuditLog).order_by(AuditLog.id.desc()).limit(limit)).all()
+        return [{"id":str(r.id),"userName":r.user_name,"action":r.action,
+                 "targetType":r.target_type,"targetId":r.target_id,
+                 "detail":r.detail,"ipAddress":r.ip_address,"createdAt":r.created_at} for r in rows]
+
+
 @app.get("/api/health")
 def health():
     return {"status": "ok", "service": "vekus-api", "version": "0.2.0"}

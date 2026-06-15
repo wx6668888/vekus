@@ -275,6 +275,35 @@ class QualityCheck(Base):
     created_at: Mapped[str] = mapped_column(String(32), nullable=False, default="")
 
 
+class Approval(Base):
+    """审批记录"""
+    __tablename__ = "approvals"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    approval_no: Mapped[str] = mapped_column(String(64), nullable=False)
+    entity_type: Mapped[str] = mapped_column(String(32), nullable=False)   # quote/purchase/production/refund
+    entity_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    entity_title: Mapped[str] = mapped_column(String(256), nullable=False, default="")  # 如"报价单 QT-xxx"
+    applicant: Mapped[str] = mapped_column(String(64), nullable=False, default="")      # 申请人
+    approver: Mapped[str] = mapped_column(String(64), nullable=False, default="")       # 审批人
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="pending")   # pending/approved/rejected
+    comment: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    created_at: Mapped[str] = mapped_column(String(32), nullable=False, default="")
+    updated_at: Mapped[str] = mapped_column(String(32), nullable=False, default="")
+
+
+class AuditLog(Base):
+    """操作日志"""
+    __tablename__ = "audit_logs"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_name: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    action: Mapped[str] = mapped_column(String(32), nullable=False)  # login/logout/create/update/delete/send/approve
+    target_type: Mapped[str] = mapped_column(String(32), nullable=False, default="")  # quote/customer/user/inventory
+    target_id: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    detail: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    ip_address: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    created_at: Mapped[str] = mapped_column(String(32), nullable=False, default="")
+
+
 class PointsTransaction(Base):
     __tablename__ = "points_transactions"
 
