@@ -165,6 +165,60 @@ class BomItem(Base):
     created_at: Mapped[str] = mapped_column(String(32), nullable=False, default="")
 
 
+class InventoryItem(Base):
+    """库存物料"""
+    __tablename__ = "inventory"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    bom_item_id: Mapped[int] = mapped_column(Integer, nullable=False, default=0)    # 关联BOM
+    code: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    name: Mapped[str] = mapped_column(String(128), nullable=False)
+    spec: Mapped[str] = mapped_column(String(128), nullable=False, default="")
+    material: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    unit: Mapped[str] = mapped_column(String(16), nullable=False, default="件")
+    quantity: Mapped[float] = mapped_column(Float, nullable=False, default=0)        # 当前库存
+    safety_stock: Mapped[float] = mapped_column(Float, nullable=False, default=0)     # 安全库存
+    location: Mapped[str] = mapped_column(String(64), nullable=False, default="")     # 库位
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="正常")    # 正常/紧缺/过剩
+    updated_at: Mapped[str] = mapped_column(String(32), nullable=False, default="")
+
+
+class InventoryLog(Base):
+    """库存流水"""
+    __tablename__ = "inventory_logs"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    item_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    type: Mapped[str] = mapped_column(String(16), nullable=False)  # in/out/check
+    quantity: Mapped[float] = mapped_column(Float, nullable=False, default=0)
+    before_qty: Mapped[float] = mapped_column(Float, nullable=False, default=0)
+    after_qty: Mapped[float] = mapped_column(Float, nullable=False, default=0)
+    related_no: Mapped[str] = mapped_column(String(64), nullable=False, default="")   # 关联单号
+    operator: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    note: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    created_at: Mapped[str] = mapped_column(String(32), nullable=False, default="")
+
+
+class ProductionOrder(Base):
+    """生产工单"""
+    __tablename__ = "production_orders"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    order_no: Mapped[str] = mapped_column(String(64), nullable=False)
+    bom_item_id: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    product_name: Mapped[str] = mapped_column(String(128), nullable=False)
+    quantity: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="draft")  # draft/scheduled/running/done/cancelled
+    priority: Mapped[str] = mapped_column(String(8), nullable=False, default="normal") # high/normal/low
+    planned_start: Mapped[str] = mapped_column(String(32), nullable=False, default="")
+    planned_end: Mapped[str] = mapped_column(String(32), nullable=False, default="")
+    actual_start: Mapped[str] = mapped_column(String(32), nullable=False, default="")
+    actual_end: Mapped[str] = mapped_column(String(32), nullable=False, default="")
+    workshop: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    assigned_to: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    progress: Mapped[int] = mapped_column(Integer, nullable=False, default=0)  # 0-100
+    note: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    created_at: Mapped[str] = mapped_column(String(32), nullable=False, default="")
+    updated_at: Mapped[str] = mapped_column(String(32), nullable=False, default="")
+
+
 class PointsTransaction(Base):
     __tablename__ = "points_transactions"
 

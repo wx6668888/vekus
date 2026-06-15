@@ -28,6 +28,8 @@ const routes: RouteRecordRaw[] = [
   { path: '/boss/sales', component: () => import('@/views/BossSalesView.vue') },
   { path: '/admin/users', component: () => import('@/views/AdminUsersView.vue') },
   { path: '/bom', component: () => import('@/views/BomView.vue') },
+  { path: '/inventory', component: () => import('@/views/InventoryView.vue') },
+  { path: '/production', component: () => import('@/views/ProductionView.vue') },
 ];
 
 const router = createRouter({

@@ -1344,6 +1344,125 @@ def bom_delete(item_id: int):
         return {"ok": True}
 
 
+# ═══════════════════ Inventory ═══════════════════
+
+from .models import InventoryItem, InventoryLog
+
+def serialize_inv(row: InventoryItem) -> dict:
+    return {"id":str(row.id),"bomItemId":str(row.bom_item_id),"code":row.code,"name":row.name,
+            "spec":row.spec,"material":row.material,"unit":row.unit,"quantity":row.quantity,
+            "safetyStock":row.safety_stock,"location":row.location,"status":row.status,"updatedAt":row.updated_at}
+
+@app.get("/api/inventory")
+def inventory_list():
+    with SessionLocal() as db:
+        rows = db.scalars(select(InventoryItem).order_by(InventoryItem.id.desc())).all()
+        return [serialize_inv(r) for r in rows]
+
+@app.post("/api/inventory")
+def inventory_create(data: dict):
+    with SessionLocal() as db:
+        row = InventoryItem(bom_item_id=int(data.get("bomItemId",0)),code=data.get("code",""),
+            name=data.get("name",""),spec=data.get("spec",""),material=data.get("material",""),
+            unit=data.get("unit","件"),quantity=float(data.get("quantity",0)),
+            safety_stock=float(data.get("safetyStock",0)),location=data.get("location",""),
+            status="正常",updated_at=now_str())
+        db.add(row); db.commit(); db.refresh(row)
+        # Log
+        db.add(InventoryLog(item_id=row.id,type="in",quantity=row.quantity,before_qty=0,
+            after_qty=row.quantity,related_no="",operator="",note="初始入库",created_at=now_str()))
+        db.commit()
+        return serialize_inv(row)
+
+@app.post("/api/inventory/{item_id}/transact")
+def inventory_transact(item_id: int, data: dict):
+    """入库/出库"""
+    with SessionLocal() as db:
+        row = db.get(InventoryItem, item_id)
+        if not row: raise HTTPException(404,"Not found")
+        t = data.get("type","in"); qty = float(data.get("quantity",0))
+        before = row.quantity
+        row.quantity = before + qty if t == "in" else before - qty
+        row.status = "紧缺" if row.quantity <= row.safety_stock else "正常"
+        row.updated_at = now_str()
+        db.add(InventoryLog(item_id=item_id,type=t,quantity=abs(qty),before_qty=before,
+            after_qty=row.quantity,related_no=data.get("relatedNo",""),
+            operator=data.get("operator",""),note=data.get("note",""),created_at=now_str()))
+        db.commit(); db.refresh(row)
+        return serialize_inv(row)
+
+@app.get("/api/inventory/{item_id}/logs")
+def inventory_logs(item_id: int):
+    with SessionLocal() as db:
+        rows = db.scalars(select(InventoryLog).where(InventoryLog.item_id==item_id).order_by(InventoryLog.id.desc()).limit(50)).all()
+        return [{"id":str(r.id),"itemId":r.item_id,"type":r.type,"quantity":r.quantity,
+                 "beforeQty":r.before_qty,"afterQty":r.after_qty,"relatedNo":r.related_no,
+                 "operator":r.operator,"note":r.note,"createdAt":r.created_at} for r in rows]
+
+@app.delete("/api/inventory/{item_id}")
+def inventory_delete(item_id: int):
+    with SessionLocal() as db:
+        row = db.get(InventoryItem, item_id)
+        if row: db.delete(row); db.commit()
+        return {"ok":True}
+
+
+# ═══════════════════ Production Orders ═══════════════════
+
+from .models import ProductionOrder
+
+def serialize_prod(row: ProductionOrder) -> dict:
+    return {"id":str(row.id),"orderNo":row.order_no,"bomItemId":str(row.bom_item_id),
+            "productName":row.product_name,"quantity":row.quantity,"status":row.status,
+            "priority":row.priority,"plannedStart":row.planned_start,"plannedEnd":row.planned_end,
+            "actualStart":row.actual_start,"actualEnd":row.actual_end,"workshop":row.workshop,
+            "assignedTo":row.assigned_to,"progress":row.progress,"note":row.note,
+            "createdAt":row.created_at,"updatedAt":row.updated_at}
+
+@app.get("/api/production")
+def production_list(status: str = ""):
+    with SessionLocal() as db:
+        stmt = select(ProductionOrder).order_by(ProductionOrder.id.desc())
+        if status: stmt = stmt.where(ProductionOrder.status == status)
+        rows = db.scalars(stmt).all()
+        return [serialize_prod(r) for r in rows]
+
+@app.post("/api/production")
+def production_create(data: dict):
+    with SessionLocal() as db:
+        no = f"MO-{datetime.now().strftime('%Y%m%d')}-{random.randint(100,999)}"
+        row = ProductionOrder(order_no=no,bom_item_id=int(data.get("bomItemId",0)),
+            product_name=data.get("productName",""),quantity=int(data.get("quantity",1)),
+            status="draft",priority=data.get("priority","normal"),
+            planned_start=data.get("plannedStart",""),planned_end=data.get("plannedEnd",""),
+            workshop=data.get("workshop",""),assigned_to=data.get("assignedTo",""),
+            progress=0,note=data.get("note",""),created_at=now_str(),updated_at=now_str())
+        db.add(row); db.commit(); db.refresh(row)
+        return serialize_prod(row)
+
+@app.put("/api/production/{order_id}")
+def production_update(order_id: int, data: dict):
+    with SessionLocal() as db:
+        row = db.get(ProductionOrder, order_id)
+        if not row: raise HTTPException(404,"Not found")
+        for f in ["status","priority","workshop","assignedTo","note","productName","plannedStart","plannedEnd"]:
+            if f in data: setattr(row, f, data[f])
+        if "quantity" in data: row.quantity = int(data["quantity"])
+        if "progress" in data: row.progress = int(data["progress"])
+        if data.get("status") == "running" and not row.actual_start: row.actual_start = now_str()
+        if data.get("status") == "done" and not row.actual_end: row.actual_end = now_str(); row.progress = 100
+        row.updated_at = now_str()
+        db.commit(); db.refresh(row)
+        return serialize_prod(row)
+
+@app.delete("/api/production/{order_id}")
+def production_delete(order_id: int):
+    with SessionLocal() as db:
+        row = db.get(ProductionOrder, order_id)
+        if row: db.delete(row); db.commit()
+        return {"ok":True}
+
+
 @app.get("/api/health")
 def health():
     return {"status": "ok", "service": "vekus-api", "version": "0.2.0"}
