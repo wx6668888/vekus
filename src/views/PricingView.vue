@@ -86,6 +86,32 @@
         </div>
       </div>
 
+      <!-- Feature Comparison Table -->
+      <div class="pricing-page__compare">
+        <h3 class="pricing-page__compare-title">功能对比</h3>
+        <div class="pricing-page__compare-table">
+          <table>
+            <thead>
+              <tr>
+                <th>功能</th>
+                <th v-for="plan in displayPlans" :key="plan.id" :class="{ 'pricing-page__col--popular': plan.popular }">
+                  {{ plan.name }}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="row in compareRows" :key="row.label">
+                <td class="pricing-page__compare-label">{{ row.label }}</td>
+                <td v-for="plan in displayPlans" :key="plan.id" :class="{ 'pricing-page__col--popular': plan.popular }">
+                  <span v-if="row.check(plan)" class="pricing-page__check-icon">✓</span>
+                  <span v-else class="pricing-page__cross-icon">—</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <!-- Balance bar -->
       <div class="pricing-page__balance" v-if="balance >= 0">
         <span class="pricing-page__balance-label">当前余额</span>
@@ -113,11 +139,63 @@ onMounted(async () => {
   balance.value = await getPointsBalance(1);
 });
 
-const featureMap: Record<string, string[]> = {
-  free: ['每日 3 次 AI 识图', '基础报价计算', 'PDF 报价单导出', '手机号登录'],
-  pro: ['无限 AI 识图', '高级报价引擎', '3D 模型预览', '客户管理', '交易广场', '微信扫码登录', '发票对账', '报价历史记录'],
-  enterprise: ['Pro 版全部功能', '专属服务器部署', 'API 接口对接', '自定义报价参数', '多人团队协作', '数据看板定制', '7×24 技术支持', '私有化部署可选'],
+const nameMap: Record<string, string> = {
+  free: '基础版',
+  pro: '专业版',
+  enterprise: '企业版',
 };
+
+const featureMap: Record<string, string[]> = {
+  free: [
+    '每日 5 次 AI 识图',
+    '基础钣金报价计算',
+    'PDF 报价单导出',
+    '手机号登录',
+    '报价历史（7 天）',
+    '基础材料库（4 种）',
+  ],
+  pro: [
+    '无限次数 AI 识图',
+    '高级报价引擎（折弯/焊接/喷涂）',
+    '3D 模型在线预览',
+    '完整的客户管理系统',
+    '交易广场买卖发布',
+    'AI 智能客服',
+    '微信扫码登录',
+    '发票管理与对账',
+    '报价历史永久保留',
+    '消息实时通知',
+  ],
+  enterprise: [
+    '专业版全部功能',
+    '独立服务器部署',
+    'API 接口对接',
+    '自定义报价参数与公式',
+    '不限人数团队协作',
+    '自定义数据看板',
+    '工作日 7×12 小时技术支持',
+    '私有化部署可选',
+    'SLA 服务等级保障',
+    '定制功能开发',
+  ],
+};
+
+// Feature comparison table
+const compareRows = [
+  { label: 'AI 识图次数', check: (p: any) => p.id !== 'enterprise' },
+  { label: '报价计算引擎', check: (p: any) => p.id !== 'free' || true },
+  { label: '3D 模型预览', check: (p: any) => p.id !== 'free' },
+  { label: '客户管理', check: (p: any) => p.id !== 'free' },
+  { label: '交易广场', check: (p: any) => p.id !== 'free' },
+  { label: '发票对账', check: (p: any) => p.id !== 'free' },
+  { label: 'AI 客服', check: (p: any) => p.id !== 'free' },
+  { label: '消息通知', check: (p: any) => true },
+  { label: 'API 接口', check: (p: any) => p.id === 'enterprise' },
+  { label: '独立部署', check: (p: any) => p.id === 'enterprise' },
+  { label: '团队协作', check: (p: any) => p.id === 'enterprise' },
+  { label: '定制开发', check: (p: any) => p.id === 'enterprise' },
+  { label: '技术支持', check: (p: any) => true },
+];
 
 const displayPlans = computed(() => {
   return plans.value.map(p => {
@@ -128,12 +206,16 @@ const displayPlans = computed(() => {
     const yearlyTotal = p.price > 0 ? Math.round(p.price * 12 * 0.8) : 0;
     return {
       ...p,
+      name: nameMap[p.id] || p.name || p.id,
       features,
       displayPrice,
       yearlyTotal,
       includesTitle: '包含功能',
       popular: p.id === 'pro',
-      description: p.description || (p.id === 'free' ? '适合个人和小团队试用 AI 报价' : p.id === 'pro' ? '适合大多数钣金加工企业日常使用' : '适合大型企业和有定制需求的客户'),
+      description:
+        p.id === 'free' ? '适合个人用户试用体验，了解 AI 报价核心流程' :
+        p.id === 'pro' ? '适合中小型钣金加工企业日常接单报价' :
+        '适合大型企业及有定制化需求的专业用户',
     };
   });
 });
@@ -413,6 +495,57 @@ async function handleBuy(plan: PricingPlan & { displayPrice: number }) {
 .pricing-page__balance-label { font-size: 14px; color: #64748b; }
 .pricing-page__balance-value { font-size: 24px; font-weight: 700; color: #2563eb; font-family: var(--font-mono); }
 .pricing-page__balance-link { font-size: 14px; color: #2563eb; text-decoration: none; font-weight: 500; }
+
+/* ===== Comparison Table ===== */
+.pricing-page__compare {
+  margin-top: 48px;
+  text-align: center;
+}
+.pricing-page__compare-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 24px;
+}
+.pricing-page__compare-table {
+  overflow-x: auto;
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+}
+.pricing-page__compare-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.pricing-page__compare-table th,
+.pricing-page__compare-table td {
+  padding: 14px 20px;
+  text-align: center;
+  border-bottom: 1px solid #f1f5f9;
+}
+.pricing-page__compare-table th {
+  background: #f8fafc;
+  font-weight: 700;
+  color: #0f172a;
+  font-size: 15px;
+}
+.pricing-page__compare-table th:first-child,
+.pricing-page__compare-table td:first-child {
+  text-align: left;
+  color: #475569;
+  font-weight: 500;
+}
+.pricing-page__compare-label { min-width: 140px; }
+.pricing-page__col--popular { background: #fafafa; }
+.pricing-page__check-icon {
+  color: #16a34a;
+  font-weight: 700;
+  font-size: 16px;
+}
+.pricing-page__cross-icon {
+  color: #cbd5e1;
+}
 
 @media (max-width: 860px) {
   .pricing-page__grid { grid-template-columns: 1fr; max-width: 400px; margin: 0 auto; }

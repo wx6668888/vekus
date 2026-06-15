@@ -1,7 +1,7 @@
 <template>
   <div class="msg-page">
     <!-- Left: Conversation List -->
-    <aside class="msg-page__list">
+    <aside :class="['msg-page__list', { 'msg-page__list--hidden': !showList }]">
       <div class="msg-page__list-header">
         <h2>消息</h2>
       </div>
@@ -42,7 +42,7 @@
     </aside>
 
     <!-- Right: Chat Area -->
-    <main class="msg-page__chat">
+    <main :class="['msg-page__chat', { 'msg-page__chat--visible': !showList || activeConv }]">
       <!-- No conversation selected -->
       <div v-if="!activeConv" class="msg-page__empty">
         <MessageCircle :size="48" stroke-width="1.5" class="msg-page__empty-icon" />
@@ -53,6 +53,9 @@
       <template v-else>
         <!-- Chat top bar -->
         <div class="msg-page__chat-top">
+          <button class="msg-page__back-btn" @click="showList = true; activeConv = null">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
           <div class="msg-page__chat-top-left">
             <span class="msg-page__chat-title">{{ activeConv.title || '聊天' }}</span>
             <span v-if="activeConv.type==='customer_service'" class="msg-page__ai-badge">
@@ -147,6 +150,7 @@ const aiThinking = ref(false);
 const msgContainer = ref<HTMLDivElement | null>(null);
 const previewImage = ref('');
 const myId = ref(1);
+const showList = ref(true); // mobile: toggles between list and chat
 
 // Sort: customer_service + system always on top
 const sortedConversations = computed(() => {
@@ -216,6 +220,7 @@ function getImageSrc(content: string): string {
 
 async function selectConv(conv: Conversation) {
   activeConv.value = conv;
+  showList.value = false; // mobile: switch to chat view
   chatLoading.value = true;
   try {
     messages.value = await getMessages(conv.id);
@@ -502,8 +507,47 @@ function scrollBottom() {
 .msg-preview-img { max-width: 90vw; max-height: 90vh; border-radius: 8px; }
 
 @media (max-width: 768px) {
-  .msg-page { flex-direction: column; height: auto; min-height: 100vh; }
-  .msg-page__list { width: 100%; max-height: 50vh; border-right: none; border-bottom: 1px solid #e2e8f0; }
-  .msg-page__chat { min-height: 50vh; }
+  .msg-page { flex-direction: column; height: auto; min-height: 100vh; position: relative; }
+  .msg-page__list {
+    width: 100%;
+    height: 100vh;
+    border-right: none;
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: #fff;
+    overflow-y: auto;
+  }
+  .msg-page__list--hidden { display: none; }
+  .msg-page__chat {
+    width: 100%;
+    height: 100vh;
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    background: #fff;
+    display: none;
+  }
+  .msg-page__chat--visible { display: flex; }
+  .msg-page__back-btn {
+    display: flex !important;
+  }
 }
+
+.msg-page__back-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: none;
+  background: #f1f5f9;
+  color: #475569;
+  cursor: pointer;
+  margin-right: 8px;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.msg-page__back-btn:hover { background: #e2e8f0; }
 </style>
