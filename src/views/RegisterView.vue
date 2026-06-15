@@ -95,22 +95,20 @@
             </button>
           </div>
 
-          <!-- Factory name (boss only) -->
-          <div
-            v-if="form.role === 'boss'"
-            class="auth-field"
-            :class="{ 'auth-field--focused': factoryFocused || form.factory_name }"
-          >
+          <!-- Company (both roles) -->
+          <div class="auth-field" :class="{ 'auth-field--focused': companyFocused || form.company }">
             <input
-              id="reg-factory"
-              v-model="form.factory_name"
+              id="reg-company"
+              v-model="form.company"
               type="text"
               class="auth-field__input"
               placeholder=" "
-              @focus="factoryFocused = true"
-              @blur="factoryFocused = false"
+              @focus="companyFocused = true"
+              @blur="companyFocused = false"
             />
-            <label for="reg-factory" class="auth-field__label">工厂/公司名称（选填）</label>
+            <label for="reg-company" class="auth-field__label">
+              {{ form.role === 'boss' ? '工厂/公司名称' : '选择或输入公司' }}
+            </label>
           </div>
 
           <p v-if="errorMsg" class="auth-view__error">{{ errorMsg }}</p>
@@ -126,14 +124,9 @@
         </div>
 
         <div class="auth-view__social">
-          <button class="auth-view__social-btn" aria-label="Github">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-          </button>
-          <button class="auth-view__social-btn" aria-label="Twitter">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-          </button>
-          <button class="auth-view__social-btn" aria-label="Linkedin">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+          <button class="auth-view__social-btn auth-view__social-btn--wechat" aria-label="微信">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 0 1 .213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.29.295a.326.326 0 0 0 .167-.054l1.903-1.114a.864.864 0 0 1 .717-.098 10.16 10.16 0 0 0 2.837.403c.276 0 .543-.027.811-.05-.857-2.578.157-4.972 1.932-6.446 1.703-1.415 3.882-1.98 5.853-1.838-.576-3.583-4.196-6.348-8.596-6.348zM5.785 5.991c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178A1.17 1.17 0 0 1 4.623 7.17c0-.651.52-1.18 1.162-1.18zm5.813 0c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178 1.17 1.17 0 0 1-1.162-1.178c0-.651.52-1.18 1.162-1.18zm3.064 2.748c-3.354 0-6.073 2.455-6.073 5.483 0 2.707 2.187 4.99 5.097 5.399l1.202.668a.361.361 0 0 0 .33-.019c.217-.138.503.023.428.266l-.228.852c-.04.148.1.29.248.204l1.612-.943a.504.504 0 0 1 .473-.04c.725.318 1.524.497 2.357.497 3.354 0 6.073-2.455 6.073-5.484 0-3.028-2.72-5.483-6.073-5.483zm-2.06 2.445c.436 0 .79.37.79.825a.808.808 0 0 1-.79.825.808.808 0 0 1-.79-.825c0-.456.353-.825.79-.825zm4.12 0c.437 0 .79.37.79.825a.808.808 0 0 1-.79.825.808.808 0 0 1-.79-.825c0-.456.354-.825.79-.825z"/></svg>
+            <span>微信登录</span>
           </button>
         </div>
 
@@ -162,14 +155,14 @@ const isDark = ref(false);
 const nameFocused = ref(false);
 const phoneFocused = ref(false);
 const passFocused = ref(false);
-const factoryFocused = ref(false);
+const companyFocused = ref(false);
 
 const form = reactive({
   name: '',
   phone: '',
   password: '',
   role: 'sales' as 'sales' | 'boss',
-  factory_name: '',
+  company: '',
 });
 
 function toggleDark() {
@@ -373,7 +366,9 @@ onUnmounted(() => cancelAnimationFrame(animFrame));
   background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.55);
   cursor: pointer; display: grid; place-items: center; transition: all 0.25s;
 }
-.auth-view__social-btn:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.25); color: #fff; transform: translateY(-2px); }
+.auth-view__social-btn:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.3); transform: translateY(-2px); }
+.auth-view__social-btn--wechat { width: auto; padding: 0 20px; gap: 8px; font-size: 14px; font-family: inherit; font-weight: 500; border-color: rgba(7,193,96,0.3); color: #07c160; }
+.auth-view__social-btn--wechat:hover { background: rgba(7,193,96,0.12); border-color: #07c160; color: #07c160; }
 .auth-view__switch { margin: 20px 0 0; text-align: center; font-size: 14px; color: rgba(255,255,255,0.45); }
 .auth-view__switch a { color: #60a5fa; text-decoration: none; font-weight: 600; transition: color 0.2s; }
 .auth-view__switch a:hover { color: #93bbfd; }
