@@ -1843,6 +1843,76 @@ def system_notifications(limit: int = 50):
     return result[:limit]
 
 
+# ═══════════════════ Invoices ═══════════════════
+
+from .models import Invoice
+
+def serialize_inv(row: Invoice) -> dict:
+    return {"id":str(row.id),"invoiceNo":row.invoice_no,"quoteId":str(row.quote_id),
+            "customerName":row.customer_name,"amount":row.amount,"taxAmount":row.tax_amount,
+            "totalAmount":row.total_amount,"status":row.status,"invoiceDate":row.invoice_date,
+            "dueDate":row.due_date,"paidDate":row.paid_date,"note":row.note,"createdAt":row.created_at}
+
+@app.get("/api/invoices")
+def invoice_list(status: str = ""):
+    with SessionLocal() as db:
+        stmt = select(Invoice).order_by(Invoice.id.desc())
+        if status: stmt = stmt.where(Invoice.status == status)
+        rows = db.scalars(stmt).all()
+        return [serialize_inv(r) for r in rows]
+
+@app.post("/api/invoices")
+def invoice_create(data: dict):
+    with SessionLocal() as db:
+        no = f"IV-{datetime.now().strftime('%Y%m%d')}-{random.randint(100,999)}"
+        amount = float(data.get("amount", 0))
+        tax = round(amount * 0.13, 2)  # 13% VAT
+        row = Invoice(invoice_no=no, quote_id=int(data.get("quoteId", 0)),
+            customer_name=data.get("customerName", ""), amount=amount,
+            tax_amount=tax, total_amount=round(amount + tax, 2),
+            status="draft", invoice_date=data.get("invoiceDate", now_str()),
+            due_date=data.get("dueDate", ""), note=data.get("note", ""), created_at=now_str())
+        db.add(row); db.commit(); db.refresh(row)
+        _notify(db, f"新发票 {row.invoice_no}", f"客户:{row.customer_name} 金额:{row.total_amount}元")
+        return serialize_inv(row)
+
+@app.put("/api/invoices/{inv_id}")
+def invoice_update(inv_id: int, data: dict):
+    with SessionLocal() as db:
+        row = db.get(Invoice, inv_id)
+        if not row: raise HTTPException(404, "Not found")
+        for f in ["status", "dueDate", "note", "customerName"]:
+            if f in data: setattr(row, f, data[f])
+        if "amount" in data:
+            row.amount = float(data["amount"])
+            row.tax_amount = round(row.amount * 0.13, 2)
+            row.total_amount = round(row.amount + row.tax_amount, 2)
+        if data.get("status") == "paid" and not row.paid_date:
+            row.paid_date = now_str()
+        db.commit(); db.refresh(row)
+        if data.get("status") == "paid":
+            _notify(db, f"发票已收款: {row.invoice_no}", f"金额:{row.total_amount}元")
+        return serialize_inv(row)
+
+@app.delete("/api/invoices/{inv_id}")
+def invoice_delete(inv_id: int):
+    with SessionLocal() as db:
+        row = db.get(Invoice, inv_id)
+        if row: db.delete(row); db.commit()
+        return {"ok": True}
+
+@app.get("/api/invoices/stats")
+def invoice_stats():
+    with SessionLocal() as db:
+        all_inv = db.scalars(select(Invoice)).all()
+        total = sum(i.total_amount for i in all_inv)
+        paid = sum(i.total_amount for i in all_inv if i.status == "paid")
+        overdue = sum(i.total_amount for i in all_inv if i.status == "overdue")
+        return {"totalAmount": total, "paidAmount": paid, "overdueAmount": overdue,
+                "totalCount": len(all_inv), "paidCount": sum(1 for i in all_inv if i.status == "paid"),
+                "pendingCount": sum(1 for i in all_inv if i.status in ("draft","sent"))}
+
+
 @app.get("/api/health")
 def health():
     return {"status": "ok", "service": "vekus-api", "version": "0.2.0"}

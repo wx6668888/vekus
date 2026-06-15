@@ -112,6 +112,7 @@ const businessSmall = [
   { path: '/history', label: '历史报价', icon: History },
   { path: '/marketplace', label: '交易广场', icon: ShoppingBag },
   { path: '/approvals', label: '审批中心', icon: CheckCircle },
+  { path: '/invoices', label: '发票对账', icon: FileText },
   { path: '/documents', label: '文档管理', icon: FolderOpen },
 ];
 

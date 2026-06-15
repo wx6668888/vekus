@@ -304,6 +304,24 @@ class AuditLog(Base):
     created_at: Mapped[str] = mapped_column(String(32), nullable=False, default="")
 
 
+class Invoice(Base):
+    """发票/对账单"""
+    __tablename__ = "invoices"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    invoice_no: Mapped[str] = mapped_column(String(64), nullable=False)
+    quote_id: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    customer_name: Mapped[str] = mapped_column(String(128), nullable=False)
+    amount: Mapped[float] = mapped_column(Float, nullable=False, default=0)
+    tax_amount: Mapped[float] = mapped_column(Float, nullable=False, default=0)
+    total_amount: Mapped[float] = mapped_column(Float, nullable=False, default=0)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="draft")  # draft/sent/paid/overdue/cancelled
+    invoice_date: Mapped[str] = mapped_column(String(32), nullable=False, default="")
+    due_date: Mapped[str] = mapped_column(String(32), nullable=False, default="")
+    paid_date: Mapped[str] = mapped_column(String(32), nullable=False, default="")
+    note: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    created_at: Mapped[str] = mapped_column(String(32), nullable=False, default="")
+
+
 class PointsTransaction(Base):
     __tablename__ = "points_transactions"
 
