@@ -3,9 +3,9 @@
     <main class="pricing-page__main">
       <!-- Header -->
       <div class="pricing-page__header">
-        <h2 class="pricing-page__title">选择适合您的方案</h2>
+        <h2 class="pricing-page__title">方案与定价</h2>
         <p class="pricing-page__subtitle">
-          专业的钣金 AI 报价服务，助力业务增长
+          从个人试用到大企业定制，找到最适合您的钣金 AI 报价方案
         </p>
 
         <!-- Monthly/Yearly Switch -->
@@ -50,7 +50,11 @@
           <div class="pricing-card__price-row">
             <span class="pricing-card__currency">¥</span>
             <span class="pricing-card__price">{{ plan.displayPrice }}</span>
-            <span class="pricing-card__period">/{{ isYearly ? '年' : '月' }}</span>
+            <span class="pricing-card__period">/月</span>
+          </div>
+          <div v-if="isYearly && plan.price > 0" class="pricing-card__yearly-info">
+            <span class="pricing-card__original">原价 ¥{{ plan.price }}/月</span>
+            <span class="pricing-card__yearly-total">年付共计 ¥{{ plan.yearlyTotal }}</span>
           </div>
 
           <div class="pricing-card__points" v-if="plan.points">
@@ -118,13 +122,15 @@ const featureMap: Record<string, string[]> = {
 const displayPlans = computed(() => {
   return plans.value.map(p => {
     const features = featureMap[p.id] || [];
-    const displayPrice = isYearly.value
-      ? (p.price > 0 ? Math.round(p.price * 12 * 0.8 / 12) : 0)
-      : p.price;
+    const monthlyPrice = p.price;
+    const yearlyPerMonth = p.price > 0 ? Math.round(p.price * 12 * 0.8 / 12) : 0;
+    const displayPrice = isYearly.value ? yearlyPerMonth : monthlyPrice;
+    const yearlyTotal = p.price > 0 ? Math.round(p.price * 12 * 0.8) : 0;
     return {
       ...p,
       features,
       displayPrice,
+      yearlyTotal,
       includesTitle: '包含功能',
       popular: p.id === 'pro',
       description: p.description || (p.id === 'free' ? '适合个人和小团队试用 AI 报价' : p.id === 'pro' ? '适合大多数钣金加工企业日常使用' : '适合大型企业和有定制需求的客户'),
@@ -297,6 +303,22 @@ async function handleBuy(plan: PricingPlan & { displayPrice: number }) {
   line-height: 1;
 }
 .pricing-card__period { font-size: 14px; color: #94a3b8; margin-left: 2px; }
+.pricing-card__yearly-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 8px;
+}
+.pricing-card__original {
+  font-size: 13px;
+  color: #94a3b8;
+  text-decoration: line-through;
+}
+.pricing-card__yearly-total {
+  font-size: 12px;
+  color: #16a34a;
+  font-weight: 600;
+}
 .pricing-card__points {
   font-size: 13px;
   color: #94a3b8;
