@@ -45,8 +45,13 @@
 
           <div class="post-view__row">
             <Input v-model.number="form.price" type="number" label="单价 (¥)" placeholder="0.00" />
-            <Input v-model="form.location" label="所在地" placeholder="如：广东深圳" />
+            <div class="post-view__select">
+              <label class="vk-input__label">所在地</label>
+              <CascadingLocation v-model="regionPath" placeholder="选择省市区" />
+            </div>
           </div>
+
+          <Input v-model="addressDetail" label="详细地址" placeholder="如：XX街道XX工业园XX号" />
 
           <Input v-model="form.contactPhone" label="联系电话" placeholder="选填" />
 
@@ -140,6 +145,7 @@ import Input from '@/components/base/Input.vue';
 import Button from '@/components/base/Button.vue';
 import Badge from '@/components/base/Badge.vue';
 import SelectMenu from '@/components/base/SelectMenu.vue';
+import CascadingLocation from '@/components/base/CascadingLocation.vue';
 import { createListing, type CreateListingData } from '@/api/marketplace';
 import { scanDrawing } from '@/api/quote';
 
@@ -153,6 +159,8 @@ const aiRecognizing = ref(false);
 const aiRecognized = ref(false);
 const imageFiles = ref<File[]>([]);
 const imagePreviews = ref<string[]>([]);
+const regionPath = ref('');
+const addressDetail = ref('');
 
 const form = reactive<CreateListingData>({
   ownerUserId: 1,
@@ -240,6 +248,7 @@ async function handleSubmit() {
   submitting.value = true;
   try {
     form.images = imagePreviews.value;
+    form.location = [regionPath.value, addressDetail.value].filter(Boolean).join(' ');
     const result = await createListing(form);
     router.push(`/marketplace/${result.id}`);
   } catch {

@@ -7,3 +7,4 @@ export { default as Toast } from './Toast.vue';
 export { default as EmptyState } from './EmptyState.vue';
 export { default as ConfirmDialog } from './ConfirmDialog.vue';
 export { default as SelectMenu } from './SelectMenu.vue';
+export { default as CascadingLocation } from './CascadingLocation.vue';

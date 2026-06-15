@@ -99,6 +99,27 @@
           </div>
         </Card>
 
+        <!-- System pricing parameters reference -->
+        <Card class="quote-form__section">
+          <h3 class="quote-form__section-title">系统报价参数</h3>
+          <p class="quote-form__section-desc">以下参数来自系统设置，影响最终报价计算</p>
+          <div v-if="systemParams.length === 0" class="quote-view__params-empty">
+            加载中...
+          </div>
+          <div v-else class="quote-view__params-grid">
+            <div v-for="cat in paramCategories" :key="cat.id" class="quote-view__params-cat">
+              <div class="quote-view__params-cat-name">{{ cat.label }}</div>
+              <div class="quote-view__params-items">
+                <div v-for="p in getParamsByCategory(cat.id)" :key="p.id" class="quote-view__params-item">
+                  <span class="quote-view__params-item-name">{{ p.name }}</span>
+                  <span class="quote-view__params-item-value">{{ p.value }} {{ p.unit }}</span>
+                </div>
+                <div v-if="getParamsByCategory(cat.id).length === 0" class="quote-view__params-none">暂无</div>
+              </div>
+            </div>
+          </div>
+        </Card>
+
         <Card class="quote-form__section">
           <h3 class="quote-form__section-title">报价确认</h3>
           <div class="quote-view__summary">
@@ -276,7 +297,28 @@ async function sendQuote() {
   } catch { showToast('发送失败，请重试'); }
 }
 
+// System pricing params
+interface SystemParam { id: number; category: string; name: string; value: string; unit: string; enabled: number; }
+const systemParams = ref<SystemParam[]>([]);
+const paramCategories = [
+  { id: 'material', label: '材料单价' },
+  { id: 'surface', label: '表面处理' },
+  { id: 'weld', label: '焊接' },
+  { id: 'bend', label: '折弯' },
+  { id: 'hole', label: '孔类' },
+  { id: 'coefficient', label: '系数' },
+];
+function getParamsByCategory(cat: string) {
+  return systemParams.value.filter(p => p.category === cat && p.enabled === 1);
+}
+
+async function fetchSystemParams() {
+  const result = await api.get<SystemParam[]>('/settings');
+  if (result.data) systemParams.value = result.data;
+}
+
 onMounted(async () => {
+  fetchSystemParams();
   if (isEdit.value) {
     try {
       const quote = await getQuote(route.params.id as string);
@@ -544,6 +586,64 @@ onMounted(async () => {
 }
 
 .quote-view__breakdown-row span { color: var(--text-muted); }
+
+/* System params display */
+.quote-view__params-empty {
+  font-size: var(--fz-sm);
+  color: var(--text-muted);
+  text-align: center;
+  padding: 20px;
+}
+
+.quote-view__params-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.quote-view__params-cat {
+  background: var(--surface-sunken);
+  border-radius: var(--r-input);
+  padding: 12px;
+}
+
+.quote-view__params-cat-name {
+  font-size: var(--fz-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--brand);
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+.quote-view__params-items {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.quote-view__params-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  font-size: var(--fz-sm);
+}
+
+.quote-view__params-item-name {
+  color: var(--text-muted);
+}
+
+.quote-view__params-item-value {
+  font-family: var(--font-mono);
+  font-weight: var(--fw-semibold);
+  color: var(--text);
+}
+
+.quote-view__params-none {
+  font-size: var(--fz-xs);
+  color: var(--text-faint);
+}
 
 .quote-view__warnings {
   display: flex;

@@ -46,8 +46,7 @@
 
       <div class="marketplace-view__extra-filters">
         <div class="marketplace-view__region-select-wrap">
-          <MapPin :size="14" class="marketplace-view__region-icon" />
-          <SelectMenu v-model="activeRegion" :options="regions" @update:model-value="fetchListings()" />
+          <CascadingLocation v-model="activeRegion" @update:model-value="fetchListings()" />
         </div>
         <div class="marketplace-view__sort">
           <span class="marketplace-view__sort-label">排序：</span>
@@ -95,7 +94,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { Plus, MapPin } from 'lucide-vue-next';
+import { Plus } from 'lucide-vue-next';
 import Sidebar from '@/components/layout/Sidebar.vue';
 import TopBar from '@/components/layout/TopBar.vue';
 import MobileNav from '@/components/layout/MobileNav.vue';
@@ -103,13 +102,14 @@ import Button from '@/components/base/Button.vue';
 import Input from '@/components/base/Input.vue';
 import EmptyState from '@/components/base/EmptyState.vue';
 import SelectMenu from '@/components/base/SelectMenu.vue';
+import CascadingLocation from '@/components/base/CascadingLocation.vue';
 import ListingCard from '@/components/quote/ListingCard.vue';
 import { listMarketplace, type Listing } from '@/api/marketplace';
 
 const search = ref('');
 const activeType = ref('all');
 const activeCategory = ref('all');
-const activeRegion = ref('all');
+const activeRegion = ref('');
 const sortBy = ref<'newest' | 'price_asc' | 'price_desc' | 'views'>('newest');
 const loading = ref(true);
 const listings = ref<Listing[]>([]);
@@ -127,41 +127,6 @@ const categories = [
   { value: '余料', label: '余料' },
   { value: '设备', label: '设备' },
   { value: '加工服务', label: '加工服务' },
-];
-
-const regions = [
-  { value: 'all', label: '全国' },
-  { value: '北京', label: '北京' },
-  { value: '上海', label: '上海' },
-  { value: '天津', label: '天津' },
-  { value: '重庆', label: '重庆' },
-  { value: '广东-深圳', label: '广东-深圳' },
-  { value: '广东-广州', label: '广东-广州' },
-  { value: '广东-东莞', label: '广东-东莞' },
-  { value: '广东-佛山', label: '广东-佛山' },
-  { value: '广东-中山', label: '广东-中山' },
-  { value: '广东-惠州', label: '广东-惠州' },
-  { value: '广东-其他', label: '广东-其他' },
-  { value: '浙江-宁波', label: '浙江-宁波' },
-  { value: '浙江-杭州', label: '浙江-杭州' },
-  { value: '浙江-温州', label: '浙江-温州' },
-  { value: '浙江-台州', label: '浙江-台州' },
-  { value: '浙江-其他', label: '浙江-其他' },
-  { value: '江苏-苏州', label: '江苏-苏州' },
-  { value: '江苏-无锡', label: '江苏-无锡' },
-  { value: '江苏-常州', label: '江苏-常州' },
-  { value: '江苏-南京', label: '江苏-南京' },
-  { value: '江苏-其他', label: '江苏-其他' },
-  { value: '河北', label: '河北' },
-  { value: '山东', label: '山东' },
-  { value: '福建', label: '福建' },
-  { value: '湖北', label: '湖北' },
-  { value: '湖南', label: '湖南' },
-  { value: '四川', label: '四川' },
-  { value: '河南', label: '河南' },
-  { value: '安徽', label: '安徽' },
-  { value: '辽宁', label: '辽宁' },
-  { value: '其他', label: '其他地区' },
 ];
 
 const sortOptions = [
@@ -298,34 +263,6 @@ function onSearch() {
 .marketplace-view__region-select-wrap {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 14px;
-  border-radius: var(--r-input);
-  border: 1px solid var(--border);
-  background: var(--surface);
-  transition: border-color var(--duration-fast);
-}
-
-.marketplace-view__region-select-wrap:focus-within {
-  border-color: var(--brand);
-  box-shadow: 0 0 0 3px var(--brand-light);
-}
-
-.marketplace-view__region-icon {
-  color: var(--text-muted);
-  flex-shrink: 0;
-}
-
-.marketplace-view__region-select {
-  flex: 1;
-  border: none;
-  background: transparent;
-  color: var(--text);
-  font-size: var(--fz-body);
-  font-family: var(--font-sans);
-  cursor: pointer;
-  outline: none;
-  min-width: 120px;
 }
 
 .marketplace-view__sort {
