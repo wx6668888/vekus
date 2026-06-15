@@ -50,6 +50,35 @@
 
           <Input v-model="form.contactPhone" label="联系电话" placeholder="选填" />
 
+          <!-- Image upload -->
+          <div class="post-view__image-section">
+            <label class="vk-input__label">产品图片（最多 6 张）</label>
+            <div class="post-view__image-grid">
+              <div
+                v-for="(img, i) in imagePreviews"
+                :key="'img-' + i"
+                class="post-view__image-item"
+              >
+                <img :src="img" class="post-view__image-thumb" />
+                <button class="post-view__image-remove" @click="removeImage(i)">✕</button>
+              </div>
+              <label
+                v-if="imagePreviews.length < 6"
+                class="post-view__image-add"
+              >
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  style="display:none"
+                  @change="onImagesSelected"
+                />
+                <Plus :size="24" />
+                <span>上传图片</span>
+              </label>
+            </div>
+          </div>
+
           <div class="post-view__textarea-group">
             <label class="vk-input__label">详细描述</label>
             <textarea
@@ -103,7 +132,7 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { ChevronLeft, Upload } from 'lucide-vue-next';
+import { ChevronLeft, Upload, Plus } from 'lucide-vue-next';
 import Sidebar from '@/components/layout/Sidebar.vue';
 import MobileNav from '@/components/layout/MobileNav.vue';
 import Card from '@/components/base/Card.vue';
@@ -122,6 +151,8 @@ const aiFileInput = ref<HTMLInputElement | null>(null);
 const aiFile = ref<File | null>(null);
 const aiRecognizing = ref(false);
 const aiRecognized = ref(false);
+const imageFiles = ref<File[]>([]);
+const imagePreviews = ref<string[]>([]);
 
 const form = reactive<CreateListingData>({
   ownerUserId: 1,
@@ -149,6 +180,27 @@ const categoryOptions = [
   { value: '加工服务', label: '加工服务' },
 ];
 
+function onImagesSelected(e: Event) {
+  const target = e.target as HTMLInputElement;
+  const files = target.files;
+  if (!files) return;
+  for (let i = 0; i < files.length && imagePreviews.value.length < 6; i++) {
+    const f = files[i];
+    imageFiles.value.push(f);
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      imagePreviews.value.push(ev.target?.result as string);
+    };
+    reader.readAsDataURL(f);
+  }
+  target.value = '';
+}
+
+function removeImage(index: number) {
+  imageFiles.value.splice(index, 1);
+  imagePreviews.value.splice(index, 1);
+}
+
 function onAiFileSelect(e: Event) {
   const target = e.target as HTMLInputElement;
   const files = target.files;
@@ -163,7 +215,6 @@ async function handleAiRecognize(f: File) {
   aiRecognized.value = false;
   try {
     const result = await scanDrawing(f);
-    // Auto-fill form fields from recognition
     if (result.thickness && !form.thickness) form.thickness = result.thickness;
     if (result.expandLength && result.expandWidth && !form.dimensions) {
       form.dimensions = `${result.expandLength}×${result.expandWidth}mm`;
@@ -188,6 +239,7 @@ async function handleSubmit() {
   if (!form.title) return;
   submitting.value = true;
   try {
+    form.images = imagePreviews.value;
     const result = await createListing(form);
     router.push(`/marketplace/${result.id}`);
   } catch {
@@ -200,7 +252,6 @@ async function handleSubmit() {
 
 <style scoped>
 .post-view {
-  display: grid;
   display: block;
   min-height: 100vh;
 }
@@ -208,6 +259,7 @@ async function handleSubmit() {
 .post-view__main {
   padding: 24px 32px 120px;
   max-width: 680px;
+  margin: 0 auto;
 }
 
 .post-view__back {
@@ -281,17 +333,75 @@ async function handleSubmit() {
   gap: 6px;
 }
 
-.post-view__select select {
-  height: 48px;
-  padding: 0 14px;
-  border-radius: var(--r-input);
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text);
-  font-size: var(--fz-body);
-  cursor: pointer;
+/* Image upload */
+.post-view__image-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
+.post-view__image-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.post-view__image-item {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--surface-sunken);
+}
+
+.post-view__image-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.post-view__image-remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0,0,0,0.55);
+  color: #fff;
+  font-size: 12px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.post-view__image-remove:hover { background: rgba(0,0,0,0.8); }
+
+.post-view__image-add {
+  aspect-ratio: 1;
+  border-radius: 10px;
+  border: 2px dashed var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: var(--fz-sm);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.post-view__image-add:hover {
+  border-color: var(--brand);
+  color: var(--brand);
+  background: var(--brand-light);
+}
+
+/* Textarea */
 .post-view__textarea-group {
   display: flex;
   flex-direction: column;
@@ -312,6 +422,7 @@ async function handleSubmit() {
   margin-top: 20px;
 }
 
+/* AI section */
 .post-view__ai-section {
   padding: 16px;
   border-radius: var(--r-input);
@@ -374,8 +485,8 @@ async function handleSubmit() {
 .mr-2 { margin-right: 8px; }
 
 @media (max-width: 768px) {
-  .post-view { grid-template-columns: 1fr; }
   .post-view__main { padding: 16px 16px 100px; }
   .post-view__row { grid-template-columns: 1fr; }
+  .post-view__image-grid { grid-template-columns: repeat(2, 1fr); }
 }
 </style>

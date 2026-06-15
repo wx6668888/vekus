@@ -123,6 +123,7 @@ function callSeller() {
 .detail-view__main {
   padding: 24px 32px 120px;
   max-width: 700px;
+  margin: 0 auto;
 }
 
 .detail-view__back {

@@ -185,26 +185,12 @@ onBeforeUnmount(() => {
 }
 
 .vk-select__menu {
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 12px;
-  box-shadow:
-    0 4px 24px rgba(0, 0, 0, 0.08),
-    0 0 0 0.5px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--sh-lg);
   padding: 6px;
   overflow: hidden;
-}
-
-@media (prefers-color-scheme: dark) {
-  .vk-select__menu {
-    background: rgba(30, 30, 32, 0.94);
-    border-color: rgba(255, 255, 255, 0.08);
-    box-shadow:
-      0 4px 24px rgba(0, 0, 0, 0.3),
-      0 0 0 0.5px rgba(255, 255, 255, 0.04);
-  }
 }
 
 .vk-select__option {
