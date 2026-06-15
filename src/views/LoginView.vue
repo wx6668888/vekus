@@ -86,11 +86,29 @@
         </div>
 
         <div class="auth-view__social">
-          <button class="auth-view__social-btn auth-view__social-btn--wechat" aria-label="微信">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 0 1 .213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.29.295a.326.326 0 0 0 .167-.054l1.903-1.114a.864.864 0 0 1 .717-.098 10.16 10.16 0 0 0 2.837.403c.276 0 .543-.027.811-.05-.857-2.578.157-4.972 1.932-6.446 1.703-1.415 3.882-1.98 5.853-1.838-.576-3.583-4.196-6.348-8.596-6.348zM5.785 5.991c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178A1.17 1.17 0 0 1 4.623 7.17c0-.651.52-1.18 1.162-1.18zm5.813 0c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178 1.17 1.17 0 0 1-1.162-1.178c0-.651.52-1.18 1.162-1.18zm3.064 2.748c-3.354 0-6.073 2.455-6.073 5.483 0 2.707 2.187 4.99 5.097 5.399l1.202.668a.361.361 0 0 0 .33-.019c.217-.138.503.023.428.266l-.228.852c-.04.148.1.29.248.204l1.612-.943a.504.504 0 0 1 .473-.04c.725.318 1.524.497 2.357.497 3.354 0 6.073-2.455 6.073-5.484 0-3.028-2.72-5.483-6.073-5.483zm-2.06 2.445c.436 0 .79.37.79.825a.808.808 0 0 1-.79.825.808.808 0 0 1-.79-.825c0-.456.353-.825.79-.825zm4.12 0c.437 0 .79.37.79.825a.808.808 0 0 1-.79.825.808.808 0 0 1-.79-.825c0-.456.354-.825.79-.825z"/></svg>
-            <span>微信登录</span>
+          <button class="auth-view__social-btn auth-view__social-btn--wechat" @click="showQr = true" aria-label="微信登录">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 0 1 .213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.29.295a.326.326 0 0 0 .167-.054l1.903-1.114a.864.864 0 0 1 .717-.098 10.16 10.16 0 0 0 2.837.403c.276 0 .543-.027.811-.05-.857-2.578.157-4.972 1.932-6.446 1.703-1.415 3.882-1.98 5.853-1.838-.576-3.583-4.196-6.348-8.596-6.348zM5.785 5.991c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178A1.17 1.17 0 0 1 4.623 7.17c0-.651.52-1.18 1.162-1.18zm5.813 0c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178 1.17 1.17 0 0 1-1.162-1.178c0-.651.52-1.18 1.162-1.18zm3.064 2.748c-3.354 0-6.073 2.455-6.073 5.483 0 2.707 2.187 4.99 5.097 5.399l1.202.668a.361.361 0 0 0 .33-.019c.217-.138.503.023.428.266l-.228.852c-.04.148.1.29.248.204l1.612-.943a.504.504 0 0 1 .473-.04c.725.318 1.524.497 2.357.497 3.354 0 6.073-2.455 6.073-5.484 0-3.028-2.72-5.483-6.073-5.483zm-2.06 2.445c.436 0 .79.37.79.825a.808.808 0 0 1-.79.825.808.808 0 0 1-.79-.825c0-.456.353-.825.79-.825zm4.12 0c.437 0 .79.37.79.825a.808.808 0 0 1-.79.825.808.808 0 0 1-.79-.825c0-.456.354-.825.79-.825z"/></svg>
           </button>
         </div>
+
+        <!-- QR Code Modal -->
+        <teleport to="body">
+          <div v-if="showQr" class="qr-overlay" @click.self="showQr = false">
+            <div class="qr-modal">
+              <button class="qr-modal__close" @click="showQr = false" aria-label="关闭">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+              <div class="qr-modal__icon">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="#07c160"><path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 0 1 .213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.29.295a.326.326 0 0 0 .167-.054l1.903-1.114a.864.864 0 0 1 .717-.098 10.16 10.16 0 0 0 2.837.403c.276 0 .543-.027.811-.05-.857-2.578.157-4.972 1.932-6.446 1.703-1.415 3.882-1.98 5.853-1.838-.576-3.583-4.196-6.348-8.596-6.348zM5.785 5.991c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178A1.17 1.17 0 0 1 4.623 7.17c0-.651.52-1.18 1.162-1.18zm5.813 0c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178 1.17 1.17 0 0 1-1.162-1.178c0-.651.52-1.18 1.162-1.18zm3.064 2.748c-3.354 0-6.073 2.455-6.073 5.483 0 2.707 2.187 4.99 5.097 5.399l1.202.668a.361.361 0 0 0 .33-.019c.217-.138.503.023.428.266l-.228.852c-.04.148.1.29.248.204l1.612-.943a.504.504 0 0 1 .473-.04c.725.318 1.524.497 2.357.497 3.354 0 6.073-2.455 6.073-5.484 0-3.028-2.72-5.483-6.073-5.483zm-2.06 2.445c.436 0 .79.37.79.825a.808.808 0 0 1-.79.825.808.808 0 0 1-.79-.825c0-.456.353-.825.79-.825zm4.12 0c.437 0 .79.37.79.825a.808.808 0 0 1-.79.825.808.808 0 0 1-.79-.825c0-.456.354-.825.79-.825z"/></svg>
+              </div>
+              <p class="qr-modal__title">微信扫码登录</p>
+              <div class="qr-modal__code">
+                <canvas ref="qrCanvas" width="200" height="200"></canvas>
+              </div>
+              <p class="qr-modal__hint">请使用微信扫描二维码</p>
+            </div>
+          </div>
+        </teleport>
 
         <p class="auth-view__switch">
           还没有账户？<router-link to="/register">立即注册</router-link>
@@ -101,7 +119,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, watch, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { Eye, EyeOff, Sun, Moon } from 'lucide-vue-next';
 import { useAuthStore } from '@/stores/auth';
@@ -119,6 +137,8 @@ const errorMsg = ref('');
 const emailFocused = ref(false);
 const passFocused = ref(false);
 const isDark = ref(false);
+const showQr = ref(false);
+const qrCanvas = ref<HTMLCanvasElement | null>(null);
 
 const particlesCanvas = ref<HTMLCanvasElement | null>(null);
 let animFrame = 0;
@@ -126,6 +146,55 @@ let animFrame = 0;
 function toggleDark() {
   isDark.value = !isDark.value;
 }
+
+// QR code generation
+function drawQr() {
+  const canvas = qrCanvas.value;
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  const size = 200;
+  ctx.clearRect(0, 0, size, size);
+  // Simulate a QR code pattern
+  const moduleCount = 21;
+  const moduleSize = size / (moduleCount + 8);
+  const offset = 4 * moduleSize;
+  // Position detection patterns (3 corners)
+  function drawFinder(x: number, y: number) {
+    ctx.fillStyle = '#111';
+    ctx.fillRect(x, y, 7 * moduleSize, 7 * moduleSize);
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(x + moduleSize, y + moduleSize, 5 * moduleSize, 5 * moduleSize);
+    ctx.fillStyle = '#111';
+    ctx.fillRect(x + 2 * moduleSize, y + 2 * moduleSize, 3 * moduleSize, 3 * moduleSize);
+  }
+  drawFinder(offset, offset);
+  drawFinder(offset + (moduleCount - 7) * moduleSize, offset);
+  drawFinder(offset, offset + (moduleCount - 7) * moduleSize);
+  // Random data modules
+  ctx.fillStyle = '#111';
+  for (let r = 0; r < moduleCount; r++) {
+    for (let c = 0; c < moduleCount; c++) {
+      if (r < 8 && c < 8) continue;
+      if (r < 8 && c > moduleCount - 9) continue;
+      if (r > moduleCount - 9 && c < 8) continue;
+      if (Math.random() > 0.5) {
+        ctx.fillRect(offset + c * moduleSize, offset + r * moduleSize, moduleSize, moduleSize);
+        ctx.fillRect(offset + c * moduleSize + 1, offset + r * moduleSize + 1, moduleSize - 2, moduleSize - 2);
+      }
+    }
+  }
+  // Center logo area
+  ctx.fillStyle = '#fff';
+  const cx = offset + (moduleCount / 2) * moduleSize;
+  const cz = 3 * moduleSize;
+  ctx.fillRect(cx - cz, cx - cz, cz * 2, cz * 2);
+  ctx.fillStyle = '#07c160';
+  ctx.beginPath();
+  ctx.arc(cx, cx, cz - 2, 0, Math.PI * 2);
+  ctx.fill();
+}
+watch(showQr, (v) => { if (v) setTimeout(drawQr, 100); })
 
 async function handleLogin() {
   if (!phone.value || !password.value) {
@@ -594,12 +663,91 @@ onUnmounted(() => {
 
 /* ===== Responsive ===== */
 @media (max-width: 480px) {
-  .auth-view__container {
-    padding: 16px;
-  }
-  .auth-view__card {
-    padding: 28px 20px;
-    border-radius: 16px;
-  }
+  .auth-view__container { padding: 16px; }
+  .auth-view__card { padding: 28px 20px; border-radius: 16px; }
 }
+
+/* ===== Animated Logo ===== */
+.auth-view__logo {
+  position: relative;
+  overflow: hidden;
+  animation: logoPulse 3s ease-in-out infinite;
+}
+.auth-view__logo::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 16px;
+  background: linear-gradient(270deg, #3b82f6, #f97316, #06b6d4, #3b82f6);
+  background-size: 300% 100%;
+  z-index: -1;
+  animation: logoGlow 4s linear infinite;
+}
+.auth-view__logo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #1e40af, #0b1c3a);
+}
+@keyframes logoPulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 12px 40px rgba(59,130,246,0.35); }
+  50% { transform: scale(1.06); box-shadow: 0 20px 56px rgba(59,130,246,0.55), 0 0 80px rgba(6,182,212,0.25); }
+}
+@keyframes logoGlow {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 300% 50%; }
+}
+
+/* ===== QR Modal ===== */
+.qr-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.25s ease-out;
+}
+.qr-modal {
+  background: #fff;
+  border-radius: 20px;
+  padding: 36px 32px 28px;
+  position: relative;
+  text-align: center;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.35);
+  max-width: 320px;
+  width: 90%;
+  animation: modalIn 0.3s ease-out;
+}
+.qr-modal__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0,0,0,0.06);
+  color: #666;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: all 0.2s;
+}
+.qr-modal__close:hover { background: rgba(0,0,0,0.12); color: #111; }
+.qr-modal__icon { margin-bottom: 12px; }
+.qr-modal__title { margin: 0 0 16px; font-size: 18px; font-weight: 700; color: #111; }
+.qr-modal__code {
+  background: #f8f8f8;
+  border-radius: 12px;
+  padding: 16px;
+  display: inline-block;
+}
+.qr-modal__code canvas { display: block; }
+.qr-modal__hint { margin: 14px 0 0; font-size: 12px; color: #999; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes modalIn { from { opacity: 0; transform: scale(0.92) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
 </style>
