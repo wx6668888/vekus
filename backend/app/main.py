@@ -1913,6 +1913,115 @@ def invoice_stats():
                 "pendingCount": sum(1 for i in all_inv if i.status in ("draft","sent"))}
 
 
+# ═══════════════════ Employees ═══════════════════
+
+from .models import Employee
+
+def serialize_emp(row: Employee) -> dict:
+    return {"id":str(row.id),"code":row.code,"name":row.name,"department":row.department,
+            "position":row.position,"phone":row.phone,"email":row.email,
+            "hireDate":row.hire_date,"status":row.status,"createdAt":row.created_at}
+
+@app.get("/api/employees")
+def employee_list():
+    with SessionLocal() as db:
+        rows = db.scalars(select(Employee).order_by(Employee.id)).all()
+        return [serialize_emp(r) for r in rows]
+
+@app.post("/api/employees")
+def employee_create(data: dict):
+    with SessionLocal() as db:
+        row = Employee(code=data.get("code",""),name=data.get("name",""),
+            department=data.get("department",""),position=data.get("position",""),
+            phone=data.get("phone",""),email=data.get("email",""),
+            hire_date=data.get("hireDate",""),status="active",created_at=now_str())
+        db.add(row); db.commit(); db.refresh(row)
+        return serialize_emp(row)
+
+@app.put("/api/employees/{emp_id}")
+def employee_update(emp_id: int, data: dict):
+    with SessionLocal() as db:
+        row = db.get(Employee, emp_id)
+        if not row: raise HTTPException(404,"Not found")
+        for f in ["name","department","position","phone","email","hireDate","status"]:
+            if f in data: setattr(row, f, data[f])
+        db.commit(); db.refresh(row)
+        return serialize_emp(row)
+
+@app.delete("/api/employees/{emp_id}")
+def employee_delete(emp_id: int):
+    with SessionLocal() as db:
+        row = db.get(Employee, emp_id)
+        if row: db.delete(row); db.commit()
+        return {"ok":True}
+
+
+# ═══════════════════ Equipment ═══════════════════
+
+from .models import Equipment
+
+def serialize_eq(row: Equipment) -> dict:
+    return {"id":str(row.id),"code":row.code,"name":row.name,"type":row.type,
+            "model":row.model,"workshop":row.workshop,"status":row.status,
+            "lastMaintenance":row.last_maintenance,"nextMaintenance":row.next_maintenance,
+            "capacityHours":row.capacity_hours,"note":row.note,"createdAt":row.created_at}
+
+@app.get("/api/equipment")
+def equipment_list():
+    with SessionLocal() as db:
+        rows = db.scalars(select(Equipment).order_by(Equipment.id)).all()
+        return [serialize_eq(r) for r in rows]
+
+@app.post("/api/equipment")
+def equipment_create(data: dict):
+    with SessionLocal() as db:
+        row = Equipment(code=data.get("code",""),name=data.get("name",""),
+            type=data.get("type",""),model=data.get("model",""),
+            workshop=data.get("workshop",""),status="idle",
+            last_maintenance=data.get("lastMaintenance",""),next_maintenance=data.get("nextMaintenance",""),
+            capacity_hours=float(data.get("capacityHours",8)),note=data.get("note",""),created_at=now_str())
+        db.add(row); db.commit(); db.refresh(row)
+        return serialize_eq(row)
+
+@app.put("/api/equipment/{eq_id}")
+def equipment_update(eq_id: int, data: dict):
+    with SessionLocal() as db:
+        row = db.get(Equipment, eq_id)
+        if not row: raise HTTPException(404,"Not found")
+        for f in ["name","type","model","workshop","status","lastMaintenance","nextMaintenance","note"]:
+            if f in data: setattr(row, f, data[f])
+        if "capacityHours" in data: row.capacity_hours = float(data["capacityHours"])
+        db.commit(); db.refresh(row)
+        return serialize_eq(row)
+
+
+# ═══════════════════ Company Profile ═══════════════════
+
+from .models import CompanyProfile
+
+@app.get("/api/company-profile")
+def company_profile_get():
+    with SessionLocal() as db:
+        row = db.scalar(select(CompanyProfile).order_by(CompanyProfile.id).limit(1))
+        if row:
+            return {"id":str(row.id),"companyName":row.company_name,"shortName":row.short_name,
+                    "address":row.address,"phone":row.phone,"email":row.email,
+                    "website":row.website,"taxId":row.tax_id,"bankName":row.bank_name,
+                    "bankAccount":row.bank_account,"logoUrl":row.logo_url}
+        return {"companyName":"Vekus","shortName":"","address":"","phone":"","email":"","website":"","taxId":"","bankName":"","bankAccount":""}
+
+@app.put("/api/company-profile")
+def company_profile_update(data: dict):
+    with SessionLocal() as db:
+        row = db.scalar(select(CompanyProfile).order_by(CompanyProfile.id).limit(1))
+        if not row:
+            row = CompanyProfile(); db.add(row)
+        for f in ["companyName","shortName","address","phone","email","website","taxId","bankName","bankAccount","logoUrl"]:
+            if f in data: setattr(row, f, data[f])
+        db.commit(); db.refresh(row)
+        return {"ok":True}
+
+
 @app.get("/api/health")
 def health():
     return {"status": "ok", "service": "vekus-api", "version": "0.2.0"}

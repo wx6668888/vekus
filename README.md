@@ -1,125 +1,149 @@
-# Vekus 智能报价平台 · 精工蓝图版
+# Vekus 钣金 AI 智能报价平台
 
-基于 Vue 3 + Vite + TypeScript 构建的钣金 AI 报价平台前端。
+> 专为钣金加工行业打造的 AI 驱动 ERP 系统，覆盖从报价到生产的全流程管理。
 
-## 设计风格
+[![Vue 3](https://img.shields.io/badge/Vue-3.x-4FC08D?logo=vue.js)](https://vuejs.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.2-009688?logo=fastapi)](https://fastapi.tiangolo.com)
+[![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python)](https://python.org)
+[![SQLite](https://img.shields.io/badge/SQLite-3-003B57?logo=sqlite)](https://sqlite.org)
 
-- **精工蓝图(Precision Blueprint)**: 浅灰底 + 深蓝 Hero + 工程橙强调 + 等宽数字
-- 核心特征:工程网格底纹、等宽数字字体、高对比度数据展示、卡片化布局
+**线上地址**: http://119.91.31.248
+
+---
+
+## 系统概述
+
+Vekus 是为钣金加工企业量身打造的智能 ERP 平台：
+
+- **AI 图纸识别**：上传 DWG/DXF/STEP/PDF/图片，自动提取板厚、展开尺寸、折弯数、孔数等参数
+- **自动报价计算**：根据材料单价、工艺费率、税率自动计算报价总价
+- **全流程管理**：报价 → BOM → 生产工单 → 质量检验 → 采购 → 库存 → 发票对账
+- **企查查集成**：企业工商信息查询 + 18 类风险排查
+- **AI 客服**：实时数据库上下文注入，可回答库存/订单/生产等问题
+
+---
+
+## 技术栈
+
+| 层级 | 技术 |
+|------|------|
+| 前端 | Vue 3 + TypeScript + Vite 5 + ECharts 5 + Three.js |
+| 后端 | FastAPI + SQLAlchemy 2.0 + SQLite |
+| 部署 | Nginx + Uvicorn + systemd |
+| AI | DeepSeek V4 / Qwen-VL (七牛云) |
+
+---
+
+## 功能模块（17个）
+
+| 模块 | 路由 | 核心功能 |
+|------|------|----------|
+| 📊 看板 | `/dashboard` | 6 KPI + ECharts 4图 + 销售漏斗 + 排行 |
+| 📦 BOM | `/bom` | 3级树形/列表/物料编码/版本管理 |
+| 🏭 库存 | `/inventory` | 出入库/流水/安全预警/库位 |
+| ⚙️ 生产 | `/production` | 工单流转(草稿→完工)/报工/进度 |
+| ✅ 质量 | `/quality` | 三检制(来料/过程/成品)/不良处理 |
+| 🚚 采购 | `/purchases` | 供应商/订单/收货自动入库 |
+| 📝 审批 | `/approvals` | 发起/通过/驳回 + 审计日志 |
+| 📄 文档 | `/documents` | 图纸上传/下载/版本/统计 |
+| 🧾 发票 | `/invoices` | 创建/发送/收款/13%增值税 |
+| 🤖 报价 | `/quote` | AI识图→计算→3D预览→PDF导出 |
+| 📋 历史 | `/history` | 报价历史/搜索/筛选/复用 |
+| 👥 客户 | `/customers` | 企查查搜索/风险排查/Excel导入导出 |
+| 🛒 交易 | `/marketplace` | 买卖发布/三级地址/图片上传 |
+| 💬 消息 | `/messages` | AI客服+DB上下文/文件图片/系统通知 |
+| 👤 人员 | `/people` | 员工档案/部门统计 |
+| ⚙️ 设置 | `/settings` | 6类报价参数/公司信息 |
+| 🔧 后台 | `/admin/users` | 用户管理(仅老板可见) |
+
+---
+
+## 数据库
+
+**18 张表**: users, customers, quotes, pricing_parameters, bom_items, inventory, inventory_logs, production_orders, quality_checks, purchase_orders, suppliers, invoices, employees, equipment, listings, conversations, messages, approvals, audit_logs, payment_orders, points_transactions
+
+---
 
 ## 快速开始
 
 ```bash
-# 安装依赖
+git clone https://github.com/wx6668888/vekus.git
+cd 识价
 npm install
+pip install -r requirements.txt
 
-# 启动开发服务器
-npm run dev
+# 终端1: 后端
+python -m uvicorn backend.app.main:app --port 8000 --reload
 
-# 构建生产版本
-npm run build
+# 终端2: 前端
+npm run dev -- --port 3001
 
-# 类型检查
-npm run type-check
+# 种子数据
+cd backend && python seed_all.py
 ```
 
-默认在 `http://localhost:3001` 启动。
+### 默认账号
+
+| 角色 | 手机号 | 密码 |
+|------|--------|------|
+| 老板 | 13800000000 | 123456 |
+| 业务员 | 13800000001 | 123456 |
+
+---
+
+## 部署
+
+```bash
+npm run build                              # 构建前端
+scp -r dist/ backend/ user@host:/data/www/vekus/
+sudo systemctl restart vekus-api           # 重启后端
+```
+
+---
 
 ## 项目结构
 
 ```
-src/
-├── api/              # API 接口层
-├── components/       # 组件库
-│   ├── base/        # 基础组件(Button/Input/Card/Badge/StatusDot/Toast)
-│   ├── data/        # 数据组件(PriceDisplay/StatBlock)
-│   ├── layout/      # 布局组件(Sidebar/TopBar/MobileNav)
-│   └── quote/       # 报价业务组件(FileDropzone/RecognizedFieldList/ResultPanel)
-├── services/         # 业务服务(报价计算引擎)
-├── stores/           # 状态管理(Pinia)
-├── styles/           # 样式系统(tokens/reset/globals)
-├── views/            # 页面组件
-└── router/           # 路由配置
+识价/
+├── backend/app/
+│   ├── main.py              # FastAPI (40+ API端点)
+│   ├── models.py            # 18张数据表
+│   └── processors/          # AI图纸处理器(DXF/DWG/STEP/Vision)
+├── src/
+│   ├── views/               # 17个视图页面
+│   ├── components/          # 组件库(base/chat/data/layout/quote)
+│   ├── composables/         # 可复用逻辑
+│   └── router/              # 路由
+├── deploy/                  # Nginx/systemd配置
+└── README.md
 ```
 
-## 核心页面
+---
 
-| 路由 | 页面 | 说明 |
-|---|---|---|
-| `/login` | 登录页 | 手机号/微信扫码登录 |
-| `/quote` | 报价工作台 | 核心功能,支持上传识图、参数修正、实时计算 |
-| `/quote/:id` | 编辑报价 | 编辑已有报价 |
-| `/quote/result/:id` | 报价结果 | 可分享的客户报价页 |
-| `/history` | 历史报价 | 查询、筛选、复用历史记录 |
-| `/customers` | 客户管理 | 客户列表与详情 |
-| `/settings` | 系统设置 | 参数字典维护 |
-| `/dashboard` | 经营看板 | 老板视角的数据概览 |
-| `/me` | 个人中心 | 用户信息与快捷入口 |
-| `/share/:id` | 分享页 | 客户查看报价的入口(无需登录) |
+## API 核心端点
 
-## 设计 Token
+| 端点 | 说明 |
+|------|------|
+| `GET /api/health` | 健康检查 |
+| `POST /api/ai/scan` | AI图纸识别 |
+| `POST /api/ai/customer-service` | AI客服(含图片+DB上下文) |
+| `GET /api/bom/tree` | BOM完整树 |
+| `POST /api/inventory/:id/transact` | 出入库 |
+| `GET /api/qichacha/search` | 企业搜索 |
+| `GET /api/qichacha/risk-scan` | 风险排查 |
+| `GET /api/system/backup` | 数据库备份下载 |
+| `GET /api/system/notifications` | 聚合通知 |
 
-所有设计变量定义在 `src/styles/tokens.css`:
+---
 
-- `--bg`: 页面背景 `#F7F8FA`
-- `--surface`: 卡片背景 `#FFFFFF`
-- `--surface-blueprint`: 蓝图 Hero `#0B1C3A`
-- `--brand`: 品牌主色 `#1E40AF`
-- `--accent`: 强调色 `#F97316`
-- `--text`: 主文本 `#0F172A`
-- `--font-mono`: 等宽数字字体 `JetBrains Mono`
+## 参考
 
-## 组件使用示例
+本项目参考了 [Carbon ERP](https://github.com/crbnos/carbon) 的模块设计理念。
 
-```vue
-<template>
-  <Button variant="primary" size="lg">发送报价</Button>
-  <PriceDisplay :value="12480" size="display" color="accent" />
-  <Card class="my-card">卡片内容</Card>
-  <Badge variant="success">已成交</Badge>
-</template>
+## 开源协议
 
-<script setup lang="ts">
-import { Button, PriceDisplay, Card, Badge } from '@/components';
-</script>
-```
+MIT License
 
-## 报价计算引擎
+---
 
-```ts
-import { calculateQuote } from '@/services';
-
-const result = calculateQuote({
-  basics: { material: '镀锌板', thickness: 1.5, quantity: 500, surface: '喷粉', ... },
-  recognized: { thickness: 1.5, expandLength: 420, ... },
-  manualOverrides: {},
-  coefficients: { tax: 1.06, discount: 0.95, ... },
-});
-// result: { breakdown: {...}, totalPrice: 12480, unitPrice: 24.96, ... }
-```
-
-## 开发说明
-
-- 使用 Vue 3 Composition API + `<script setup>`
-- 状态管理使用 Pinia
-- 路由使用 Vue Router
-- 样式使用原生 CSS + CSS 变量
-- 字体使用 Inter(中文) + JetBrains Mono(数字)
-
-## 待接入后端
-
-当前使用 mock 数据和纯前端计算,待接入的后端接口:
-- `POST /api/ai/scan` - 图纸识别
-- `POST /api/quotes` - 保存报价
-- `GET /api/quotes/:id` - 获取报价
-- `GET /api/quotes` - 报价列表
-- `GET /api/customers/search` - 客户搜索
-
-## 与旧版对比
-
-- 旧版: 单页 HTML + 原生 JS,深色沉浸风格
-- 新版: Vue 3 工程化,精工蓝图风格,组件化,类型安全
-
-## 许可
-
-内部项目
+*Co-Authored-By: Claude <noreply@anthropic.com>*

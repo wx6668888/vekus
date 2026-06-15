@@ -322,6 +322,54 @@ class Invoice(Base):
     created_at: Mapped[str] = mapped_column(String(32), nullable=False, default="")
 
 
+class Employee(Base):
+    """员工/人员"""
+    __tablename__ = "employees"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    code: Mapped[str] = mapped_column(String(32), nullable=False, default="")
+    name: Mapped[str] = mapped_column(String(64), nullable=False)
+    department: Mapped[str] = mapped_column(String(32), nullable=False, default="")  # 管理/生产/质量/采购/销售
+    position: Mapped[str] = mapped_column(String(32), nullable=False, default="")   # 经理/主管/工程师/操作工
+    phone: Mapped[str] = mapped_column(String(32), nullable=False, default="")
+    email: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    hire_date: Mapped[str] = mapped_column(String(32), nullable=False, default="")
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="active")  # active/inactive
+    created_at: Mapped[str] = mapped_column(String(32), nullable=False, default="")
+
+
+class Equipment(Base):
+    """设备/机器"""
+    __tablename__ = "equipment"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    code: Mapped[str] = mapped_column(String(32), nullable=False, default="")
+    name: Mapped[str] = mapped_column(String(128), nullable=False)
+    type: Mapped[str] = mapped_column(String(32), nullable=False, default="")  # 折弯机/激光切割/冲床/焊接/其他
+    model: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    workshop: Mapped[str] = mapped_column(String(32), nullable=False, default="")
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="idle")  # idle/running/maintenance/repair
+    last_maintenance: Mapped[str] = mapped_column(String(32), nullable=False, default="")
+    next_maintenance: Mapped[str] = mapped_column(String(32), nullable=False, default="")
+    capacity_hours: Mapped[float] = mapped_column(Float, nullable=False, default=8)  # 每日可用工时
+    note: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    created_at: Mapped[str] = mapped_column(String(32), nullable=False, default="")
+
+
+class CompanyProfile(Base):
+    """公司信息"""
+    __tablename__ = "company_profile"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    company_name: Mapped[str] = mapped_column(String(128), nullable=False, default="Vekus")
+    short_name: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    address: Mapped[str] = mapped_column(String(256), nullable=False, default="")
+    phone: Mapped[str] = mapped_column(String(32), nullable=False, default="")
+    email: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    website: Mapped[str] = mapped_column(String(128), nullable=False, default="")
+    tax_id: Mapped[str] = mapped_column(String(32), nullable=False, default="")
+    bank_name: Mapped[str] = mapped_column(String(128), nullable=False, default="")
+    bank_account: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    logo_url: Mapped[str] = mapped_column(String(256), nullable=False, default="")
+
+
 class PointsTransaction(Base):
     __tablename__ = "points_transactions"
 
