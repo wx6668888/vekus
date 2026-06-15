@@ -1463,6 +1463,163 @@ def production_delete(order_id: int):
         return {"ok":True}
 
 
+# ═══════════════════ Suppliers ═══════════════════
+
+from .models import Supplier
+
+def serialize_sup(row: Supplier) -> dict:
+    return {"id":str(row.id),"code":row.code,"name":row.name,"contactName":row.contact_name,
+            "phone":row.phone,"email":row.email,"address":row.address,"category":row.category,
+            "status":row.status,"createdAt":row.created_at}
+
+@app.get("/api/suppliers")
+def supplier_list():
+    with SessionLocal() as db:
+        rows = db.scalars(select(Supplier).order_by(Supplier.id.desc())).all()
+        return [serialize_sup(r) for r in rows]
+
+@app.post("/api/suppliers")
+def supplier_create(data: dict):
+    with SessionLocal() as db:
+        row = Supplier(code=data.get("code",""),name=data.get("name",""),contact_name=data.get("contactName",""),
+            phone=data.get("phone",""),email=data.get("email",""),address=data.get("address",""),
+            category=data.get("category","材料"),status="active",created_at=now_str())
+        db.add(row); db.commit(); db.refresh(row)
+        return serialize_sup(row)
+
+@app.put("/api/suppliers/{sup_id}")
+def supplier_update(sup_id: int, data: dict):
+    with SessionLocal() as db:
+        row = db.get(Supplier, sup_id)
+        if not row: raise HTTPException(404,"Not found")
+        for f in ["name","contactName","phone","email","address","category","status"]:
+            if f in data: setattr(row, f, data[f])
+        db.commit(); db.refresh(row)
+        return serialize_sup(row)
+
+@app.delete("/api/suppliers/{sup_id}")
+def supplier_delete(sup_id: int):
+    with SessionLocal() as db:
+        row = db.get(Supplier, sup_id)
+        if row: db.delete(row); db.commit()
+        return {"ok":True}
+
+
+# ═══════════════════ Purchase Orders ═══════════════════
+
+from .models import PurchaseOrder
+
+def serialize_po(row: PurchaseOrder) -> dict:
+    return {"id":str(row.id),"orderNo":row.order_no,"supplierId":str(row.supplier_id),
+            "supplierName":row.supplier_name,"itemName":row.item_name,"spec":row.spec,
+            "quantity":row.quantity,"unit":row.unit,"price":row.price,"totalAmount":row.total_amount,
+            "status":row.status,"orderDate":row.order_date,"receiveDate":row.receive_date,
+            "note":row.note,"createdAt":row.created_at}
+
+@app.get("/api/purchases")
+def purchase_list(status: str = ""):
+    with SessionLocal() as db:
+        stmt = select(PurchaseOrder).order_by(PurchaseOrder.id.desc())
+        if status: stmt = stmt.where(PurchaseOrder.status == status)
+        rows = db.scalars(stmt).all()
+        return [serialize_po(r) for r in rows]
+
+@app.post("/api/purchases")
+def purchase_create(data: dict):
+    with SessionLocal() as db:
+        qty = float(data.get("quantity",1)); price = float(data.get("price",0))
+        no = f"PO-{datetime.now().strftime('%Y%m%d')}-{random.randint(100,999)}"
+        row = PurchaseOrder(order_no=no,supplier_id=int(data.get("supplierId",0)),
+            supplier_name=data.get("supplierName",""),item_name=data.get("itemName",""),
+            spec=data.get("spec",""),quantity=qty,unit=data.get("unit","件"),
+            price=price,total_amount=round(qty*price,2),
+            status="draft",order_date=data.get("orderDate",""),receive_date=data.get("receiveDate",""),
+            note=data.get("note",""),created_at=now_str())
+        db.add(row); db.commit(); db.refresh(row)
+        return serialize_po(row)
+
+@app.put("/api/purchases/{po_id}")
+def purchase_update(po_id: int, data: dict):
+    with SessionLocal() as db:
+        row = db.get(PurchaseOrder, po_id)
+        if not row: raise HTTPException(404,"Not found")
+        for f in ["status","orderDate","receiveDate","note","supplierName"]:
+            if f in data: setattr(row, f, data[f])
+        if "quantity" in data: row.quantity = float(data["quantity"])
+        if "price" in data: row.price = float(data["price"]); row.total_amount = round(row.quantity*row.price,2)
+        # Auto-add to inventory on receive
+        if data.get("status") == "received":
+            with SessionLocal() as db2:
+                inv = db2.scalar(select(InventoryItem).where(InventoryItem.name == row.item_name))
+                if inv:
+                    inv.quantity += row.quantity; inv.updated_at = now_str()
+                    db2.add(InventoryLog(item_id=inv.id,type="in",quantity=row.quantity,before_qty=inv.quantity-row.quantity,
+                        after_qty=inv.quantity,related_no=row.order_no,operator="",note=f"采购收货: {row.order_no}",created_at=now_str()))
+                    db2.commit()
+        db.commit(); db.refresh(row)
+        return serialize_po(row)
+
+@app.delete("/api/purchases/{po_id}")
+def purchase_delete(po_id: int):
+    with SessionLocal() as db:
+        row = db.get(PurchaseOrder, po_id)
+        if row: db.delete(row); db.commit()
+        return {"ok":True}
+
+
+# ═══════════════════ Quality ═══════════════════
+
+from .models import QualityCheck
+
+def serialize_qc(row: QualityCheck) -> dict:
+    return {"id":str(row.id),"checkNo":row.check_no,"type":row.type,"relatedType":row.related_type,
+            "relatedId":str(row.related_id),"itemName":row.item_name,"quantity":row.quantity,
+            "passQty":row.pass_qty,"failQty":row.fail_qty,"result":row.result,
+            "inspector":row.inspector,"checkDate":row.check_date,"defectDesc":row.defect_desc,
+            "handle":row.handle,"note":row.note,"createdAt":row.created_at}
+
+@app.get("/api/quality")
+def quality_list(type: str = ""):
+    with SessionLocal() as db:
+        stmt = select(QualityCheck).order_by(QualityCheck.id.desc())
+        if type: stmt = stmt.where(QualityCheck.type == type)
+        rows = db.scalars(stmt).all()
+        return [serialize_qc(r) for r in rows]
+
+@app.post("/api/quality")
+def quality_create(data: dict):
+    with SessionLocal() as db:
+        no = f"QC-{datetime.now().strftime('%Y%m%d')}-{random.randint(100,999)}"
+        row = QualityCheck(check_no=no,type=data.get("type","incoming"),
+            related_type=data.get("relatedType",""),related_id=int(data.get("relatedId",0)),
+            item_name=data.get("itemName",""),quantity=int(data.get("quantity",1)),
+            pass_qty=int(data.get("passQty",0)),fail_qty=int(data.get("failQty",0)),
+            result=data.get("result","pass"),inspector=data.get("inspector",""),
+            check_date=data.get("checkDate",""),defect_desc=data.get("defectDesc",""),
+            handle=data.get("handle",""),note=data.get("note",""),created_at=now_str())
+        db.add(row); db.commit(); db.refresh(row)
+        return serialize_qc(row)
+
+@app.put("/api/quality/{qc_id}")
+def quality_update(qc_id: int, data: dict):
+    with SessionLocal() as db:
+        row = db.get(QualityCheck, qc_id)
+        if not row: raise HTTPException(404,"Not found")
+        for f in ["result","inspector","checkDate","defectDesc","handle","note","relatedType"]:
+            if f in data: setattr(row, f, data[f])
+        for f in ["quantity","passQty","failQty"]:
+            if f in data: setattr(row, f, int(data[f]))
+        db.commit(); db.refresh(row)
+        return serialize_qc(row)
+
+@app.delete("/api/quality/{qc_id}")
+def quality_delete(qc_id: int):
+    with SessionLocal() as db:
+        row = db.get(QualityCheck, qc_id)
+        if row: db.delete(row); db.commit()
+        return {"ok":True}
+
+
 @app.get("/api/health")
 def health():
     return {"status": "ok", "service": "vekus-api", "version": "0.2.0"}

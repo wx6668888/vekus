@@ -35,7 +35,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useRoute } from 'vue-router';
-import { LayoutDashboard, FileText, History, Users, Settings, User, ShoppingBag, MessageSquare, Layers, Package, Wrench } from 'lucide-vue-next';
+import { LayoutDashboard, FileText, History, Users, Settings, User, ShoppingBag, MessageSquare, Layers, Package, Wrench, ShieldCheck, Truck } from 'lucide-vue-next';
 import StatusDot from '../base/StatusDot.vue';
 
 const route = useRoute();
@@ -45,6 +45,8 @@ const navItems = computed(() => [
   { path: '/bom', label: 'BOM', icon: Layers },
   { path: '/inventory', label: '库存', icon: Package },
   { path: '/production', label: '生产', icon: Wrench },
+  { path: '/quality', label: '质量', icon: ShieldCheck },
+  { path: '/purchases', label: '采购', icon: Truck },
   { path: '/quote', label: '报价', icon: FileText },
   { path: '/history', label: '历史', icon: History },
   { path: '/customers', label: '客户', icon: Users },

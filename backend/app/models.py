@@ -219,6 +219,62 @@ class ProductionOrder(Base):
     updated_at: Mapped[str] = mapped_column(String(32), nullable=False, default="")
 
 
+class Supplier(Base):
+    """供应商"""
+    __tablename__ = "suppliers"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    code: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    name: Mapped[str] = mapped_column(String(128), nullable=False)
+    contact_name: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    phone: Mapped[str] = mapped_column(String(32), nullable=False, default="")
+    email: Mapped[str] = mapped_column(String(128), nullable=False, default="")
+    address: Mapped[str] = mapped_column(String(256), nullable=False, default="")
+    category: Mapped[str] = mapped_column(String(32), nullable=False, default="材料")  # 材料/外协/设备/其他
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="active")
+    created_at: Mapped[str] = mapped_column(String(32), nullable=False, default="")
+
+
+class PurchaseOrder(Base):
+    """采购订单"""
+    __tablename__ = "purchase_orders"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    order_no: Mapped[str] = mapped_column(String(64), nullable=False)
+    supplier_id: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    supplier_name: Mapped[str] = mapped_column(String(128), nullable=False, default="")
+    item_name: Mapped[str] = mapped_column(String(128), nullable=False)          # 采购物料
+    spec: Mapped[str] = mapped_column(String(128), nullable=False, default="")
+    quantity: Mapped[float] = mapped_column(Float, nullable=False, default=1)
+    unit: Mapped[str] = mapped_column(String(16), nullable=False, default="件")
+    price: Mapped[float] = mapped_column(Float, nullable=False, default=0)       # 单价
+    total_amount: Mapped[float] = mapped_column(Float, nullable=False, default=0) # 总金额
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="draft")  # draft/sent/received/done/cancelled
+    order_date: Mapped[str] = mapped_column(String(32), nullable=False, default="")
+    receive_date: Mapped[str] = mapped_column(String(32), nullable=False, default="")
+    note: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    created_at: Mapped[str] = mapped_column(String(32), nullable=False, default="")
+
+
+class QualityCheck(Base):
+    """质量检验"""
+    __tablename__ = "quality_checks"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    check_no: Mapped[str] = mapped_column(String(64), nullable=False)
+    type: Mapped[str] = mapped_column(String(16), nullable=False)  # incoming/process/final
+    related_type: Mapped[str] = mapped_column(String(16), nullable=False, default="")  # purchase/production
+    related_id: Mapped[int] = mapped_column(Integer, nullable=False, default=0)        # 关联采购单/工单ID
+    item_name: Mapped[str] = mapped_column(String(128), nullable=False)
+    quantity: Mapped[int] = mapped_column(Integer, nullable=False, default=1)          # 检验数量
+    pass_qty: Mapped[int] = mapped_column(Integer, nullable=False, default=0)          # 合格
+    fail_qty: Mapped[int] = mapped_column(Integer, nullable=False, default=0)          # 不合格
+    result: Mapped[str] = mapped_column(String(8), nullable=False, default="pass")     # pass/fail/partial
+    inspector: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    check_date: Mapped[str] = mapped_column(String(32), nullable=False, default="")
+    defect_desc: Mapped[str] = mapped_column(Text, nullable=False, default="")          # 不良描述
+    handle: Mapped[str] = mapped_column(String(32), nullable=False, default="")         # 处理方式: rework/scrap/return/accept
+    note: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    created_at: Mapped[str] = mapped_column(String(32), nullable=False, default="")
+
+
 class PointsTransaction(Base):
     __tablename__ = "points_transactions"
 
