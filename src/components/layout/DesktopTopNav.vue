@@ -18,21 +18,29 @@
           </button>
           <Transition name="vk-dd-fade">
             <div v-if="open==='production'" class="vk-dd__panel">
-              <div class="vk-dd__grid">
-                <router-link v-for="m in productionBig" :key="m.path" :to="m.path" class="vk-dd__card" @click="open=''">
-                  <div class="vk-dd__card-pattern"></div>
-                  <div class="vk-dd__card-glow"></div>
-                  <component :is="m.icon" class="vk-dd__card-icon" :size="22" />
-                  <div class="vk-dd__card-text">
-                    <span class="vk-dd__card-title">{{ m.label }}</span>
-                    <span class="vk-dd__card-desc">{{ m.desc }}</span>
+              <div class="vk-dd__split">
+                <!-- Left: cards grid -->
+                <div class="vk-dd__left">
+                  <div class="vk-dd__grid">
+                    <router-link v-for="m in productionBig" :key="m.path" :to="m.path" class="vk-dd__card" @click="open=''">
+                      <div class="vk-dd__card-pattern"></div>
+                      <div class="vk-dd__card-glow"></div>
+                      <component :is="m.icon" class="vk-dd__card-icon" :size="22" />
+                      <div class="vk-dd__card-text">
+                        <span class="vk-dd__card-title">{{ m.label }}</span>
+                        <span class="vk-dd__card-desc">{{ m.desc }}</span>
+                      </div>
+                    </router-link>
                   </div>
-                </router-link>
-              </div>
-              <div class="vk-dd__footer">
-                <router-link v-for="m in productionSmall" :key="m.path" :to="m.path" class="vk-dd__link" @click="open=''">
-                  <component :is="m.icon" :size="14" />{{ m.label }}
-                </router-link>
+                </div>
+                <!-- Right: link list -->
+                <div class="vk-dd__right">
+                  <div class="vk-dd__right-title">更多</div>
+                  <router-link v-for="m in productionSmall" :key="m.path" :to="m.path" class="vk-dd__right-link" @click="open=''">
+                    <component :is="m.icon" :size="15" /><span>{{ m.label }}</span>
+                    <ChevronRight :size="13" class="vk-dd__right-arrow" />
+                  </router-link>
+                </div>
               </div>
             </div>
           </Transition>
@@ -45,21 +53,29 @@
           </button>
           <Transition name="vk-dd-fade">
             <div v-if="open==='business'" class="vk-dd__panel">
-              <div class="vk-dd__grid vk-dd__grid--2col">
-                <router-link v-for="m in businessBig" :key="m.path" :to="m.path" class="vk-dd__card vk-dd__card--tall" @click="open=''">
-                  <div class="vk-dd__card-pattern"></div>
-                  <div class="vk-dd__card-glow"></div>
-                  <component :is="m.icon" class="vk-dd__card-icon" :size="24" />
-                  <div class="vk-dd__card-text">
-                    <span class="vk-dd__card-title">{{ m.label }}</span>
-                    <span class="vk-dd__card-desc">{{ m.desc }}</span>
+              <div class="vk-dd__split">
+                <!-- Left: big feature cards -->
+                <div class="vk-dd__left">
+                  <div class="vk-dd__grid vk-dd__grid--2col">
+                    <router-link v-for="m in businessBig" :key="m.path" :to="m.path" class="vk-dd__card vk-dd__card--feature" @click="open=''">
+                      <div class="vk-dd__card-pattern"></div>
+                      <div class="vk-dd__card-glow"></div>
+                      <component :is="m.icon" class="vk-dd__card-icon" :size="26" />
+                      <div class="vk-dd__card-text">
+                        <span class="vk-dd__card-title">{{ m.label }}</span>
+                        <span class="vk-dd__card-desc">{{ m.desc }}</span>
+                      </div>
+                    </router-link>
                   </div>
-                </router-link>
-              </div>
-              <div class="vk-dd__footer">
-                <router-link v-for="m in businessSmall" :key="m.path" :to="m.path" class="vk-dd__link" @click="open=''">
-                  <component :is="m.icon" :size="14" />{{ m.label }}
-                </router-link>
+                </div>
+                <!-- Right: link list -->
+                <div class="vk-dd__right">
+                  <div class="vk-dd__right-title">更多</div>
+                  <router-link v-for="m in businessSmall" :key="m.path" :to="m.path" class="vk-dd__right-link" @click="open=''">
+                    <component :is="m.icon" :size="15" /><span>{{ m.label }}</span>
+                    <ChevronRight :size="13" class="vk-dd__right-arrow" />
+                  </router-link>
+                </div>
               </div>
             </div>
           </Transition>
@@ -86,7 +102,7 @@ import { ref } from 'vue';
 import { useRoute } from 'vue-router';
 import {
   LayoutDashboard, FileText, History, Users, ShoppingBag,
-  MessageSquare, Settings, Layers, Package, Wrench, ShieldCheck, Truck, CheckCircle, FolderOpen, ChevronDown,
+  MessageSquare, Settings, Layers, Package, Wrench, ShieldCheck, Truck, CheckCircle, FolderOpen, ChevronDown, ChevronRight,
 } from 'lucide-vue-next';
 import { useAuthStore } from '@/stores/auth';
 
@@ -105,8 +121,8 @@ const productionSmall = [
 ];
 
 const businessBig = [
-  { path: '/quote', label: '智能报价', desc: 'AI 识图自动提取参数，实时计算报价总价，支持 PDF 导出与分享', icon: FileText },
-  { path: '/customers', label: '客户管理', desc: '企业工商查询、风险排查、客户等级分类与跟进记录', icon: Users },
+  { path: '/quote', label: '智能报价', desc: 'AI 识图自动提取参数，实时计算报价总价，支持 PDF 导出', icon: FileText },
+  { path: '/customers', label: '客户管理', desc: '企业工商查询、风险排查、客户等级与跟进记录', icon: Users },
 ];
 const businessSmall = [
   { path: '/history', label: '历史报价', icon: History },
@@ -178,21 +194,46 @@ function isMenuActive(menu: string) {
   backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
   border: 1px solid rgba(0,0,0,0.06);
   border-radius: 18px;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.02), 0 16px 48px rgba(0,0,0,0.1), 0 0 0 0.5px rgba(0,0,0,0.04);
-  padding: 20px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.02), 0 16px 48px rgba(0,0,0,0.1);
   z-index: 200;
-  width: 560px;
 }
 
-/* Grid layout */
-.vk-dd__grid { display: grid; gap: 12px; margin-bottom: 16px; grid-template-columns: repeat(3, 1fr); }
+/* Split layout: left cards + right link list */
+.vk-dd__split { display: flex; }
+.vk-dd__left { flex: 1; padding: 16px; min-width: 0; }
+.vk-dd__right {
+  width: 180px; flex-shrink: 0;
+  padding: 16px 16px 16px 8px;
+  border-left: 1px solid var(--border);
+  background: var(--surface-sunken);
+  border-radius: 0 18px 18px 0;
+}
+
+.vk-dd__right-title {
+  font-size: 11px; font-weight: 600; color: var(--text-faint);
+  text-transform: uppercase; letter-spacing: 0.5px;
+  margin-bottom: 8px; padding-left: 12px;
+}
+
+.vk-dd__right-link {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 12px; border-radius: 8px;
+  font-size: 13px; color: var(--text);
+  text-decoration: none; transition: all 0.1s;
+}
+.vk-dd__right-link:hover { background: var(--brand-light); color: var(--brand); }
+.vk-dd__right-link span { flex: 1; }
+.vk-dd__right-arrow { opacity: 0; transition: all 0.15s; color: var(--text-faint); flex-shrink: 0; }
+.vk-dd__right-link:hover .vk-dd__right-arrow { opacity: 1; transform: translateX(2px); color: var(--brand); }
+
+/* Grid cards in left panel */
+.vk-dd__grid { display: grid; gap: 10px; grid-template-columns: repeat(3, 1fr); }
 .vk-dd__grid--2col { grid-template-columns: repeat(2, 1fr); }
 
-/* ====== GridCard with geometric pattern ====== */
 .vk-dd__card {
   position: relative; isolation: isolate; overflow: hidden;
-  display: flex; flex-direction: column; gap: 12px;
-  padding: 16px; border-radius: 12px;
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 14px; border-radius: 10px;
   background: var(--surface-sunken);
   border: 1px solid transparent;
   text-decoration: none; cursor: pointer;
@@ -200,48 +241,33 @@ function isMenuActive(menu: string) {
 }
 .vk-dd__card:hover {
   background: #fff; border-color: var(--border);
-  box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.05);
   transform: translateY(-1px);
 }
-.vk-dd__card--tall { padding: 20px; }
+.vk-dd__card--feature { padding: 18px; gap: 14px; }
 
 /* Geometric dot pattern */
 .vk-dd__card-pattern {
-  position: absolute; inset: 0; z-index: -1; opacity: 0.4;
-  background-image: radial-gradient(circle, var(--border) 0.8px, transparent 0.8px);
-  background-size: 14px 14px;
-  mask-image: linear-gradient(180deg, black 40%, transparent 100%);
-  -webkit-mask-image: linear-gradient(180deg, black 40%, transparent 100%);
+  position: absolute; inset: 0; z-index: -1; opacity: 0.35;
+  background-image: radial-gradient(circle, var(--border) 0.7px, transparent 0.7px);
+  background-size: 12px 12px;
+  mask-image: linear-gradient(135deg, black 35%, transparent 100%);
+  -webkit-mask-image: linear-gradient(135deg, black 35%, transparent 100%);
 }
 
-/* Hover glow */
 .vk-dd__card-glow {
   position: absolute; inset: -20%; z-index: -1; opacity: 0;
   transition: opacity 0.3s ease;
-  background: conic-gradient(from 0deg, rgba(37,99,235,0.08), rgba(124,58,237,0.06), rgba(37,99,235,0.04), rgba(37,99,235,0.08));
+  background: conic-gradient(from 0deg, rgba(37,99,235,0.06), rgba(124,58,237,0.04), rgba(37,99,235,0.03), rgba(37,99,235,0.06));
   border-radius: 50%; filter: blur(40px);
 }
 .vk-dd__card:hover .vk-dd__card-glow { opacity: 1; }
 
-/* Monochrome icon */
-.vk-dd__card-icon {
-  color: var(--text-muted);
-  flex-shrink: 0;
-  opacity: 0.7;
-}
+.vk-dd__card-icon { color: var(--text-muted); opacity: 0.65; flex-shrink: 0; }
 
-.vk-dd__card-text { display: flex; flex-direction: column; gap: 4px; }
-.vk-dd__card-title { font-size: 14px; font-weight: 600; color: var(--text); }
-.vk-dd__card-desc { font-size: 12px; color: var(--text-muted); line-height: 1.45; }
-
-/* Footer links */
-.vk-dd__footer { display: flex; gap: 4px; padding-top: 14px; border-top: 1px solid var(--border); flex-wrap: wrap; }
-.vk-dd__link {
-  display: inline-flex; align-items: center; gap: 5px;
-  padding: 6px 12px; border-radius: 8px; font-size: 12px; color: var(--text-muted);
-  text-decoration: none; transition: all 0.1s;
-}
-.vk-dd__link:hover { background: var(--brand-light); color: var(--brand); }
+.vk-dd__card-text { display: flex; flex-direction: column; gap: 3px; }
+.vk-dd__card-title { font-size: 13px; font-weight: 600; color: var(--text); }
+.vk-dd__card-desc { font-size: 11px; color: var(--text-muted); line-height: 1.4; }
 
 /* Transitions */
 .vk-dd-fade-enter-active { transition: all 0.18s cubic-bezier(0.16,1,0.3,1); }
@@ -250,5 +276,5 @@ function isMenuActive(menu: string) {
 .vk-dd-fade-leave-to { opacity: 0; transform: translateX(-50%) translateY(-3px) scale(0.98); }
 
 @media (min-width: 769px) { .vk-topnav { display: block; } }
-@media (max-width: 960px) { .vk-dd__panel { width: 480px; } }
+@media (max-width: 860px) { .vk-dd__right { width: 140px; } .vk-dd__panel { width: 480px; } }
 </style>
