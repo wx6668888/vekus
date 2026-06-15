@@ -34,12 +34,15 @@
             {{ msg.content }}
           </div>
           <template v-else>
-            <img
-              v-if="msg.messageType === 'image'"
-              :src="msg.content"
-              class="chat-view__bubble-img"
-              @click="previewImage = msg.content"
-            />
+            <!-- Image + optional text caption -->
+            <template v-if="msg.messageType === 'image'">
+              <div v-if="getImageCaption(msg.content)" class="chat-view__bubble-content">{{ getImageCaption(msg.content) }}</div>
+              <img
+                :src="getImageSrc(msg.content)"
+                class="chat-view__bubble-img"
+                @click.stop="previewImage = getImageSrc(msg.content)"
+              />
+            </template>
             <div v-else class="chat-view__bubble-content">{{ msg.content }}</div>
             <div class="chat-view__bubble-time">{{ formatTime(msg.createdAt) }}</div>
           </template>
@@ -135,7 +138,8 @@ async function onSend(text: string, file?: File) {
     if (file.type.startsWith('image/')) {
       messageType = 'image';
       compressedBase64 = await compressImage(file, 1024, 512 * 1024);
-      content = compressedBase64;
+      // Preserve text as caption: format "caption|||base64"
+      content = text ? `${text}|||${compressedBase64}` : compressedBase64;
     } else {
       content = text ? `${text}\n[附件: ${file.name}]` : `[附件: ${file.name}]`;
     }
@@ -223,6 +227,16 @@ async function onSend(text: string, file?: File) {
 
   // Ensure send completed
   await sendPromise;
+}
+
+// Parse combined image+text content: "caption|||base64" or just "base64"
+function getImageSrc(content: string): string {
+  const sep = content.indexOf('|||');
+  return sep > 0 ? content.slice(sep + 3) : content;
+}
+function getImageCaption(content: string): string {
+  const sep = content.indexOf('|||');
+  return sep > 0 ? content.slice(0, sep) : '';
 }
 
 function formatTime(dateStr: string): string {
