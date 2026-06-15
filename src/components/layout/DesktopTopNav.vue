@@ -25,7 +25,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { useRoute } from 'vue-router';
-import { LayoutDashboard, FileText, History, Users, ShoppingBag, MessageSquare, Settings, User } from 'lucide-vue-next';
+import { LayoutDashboard, FileText, History, Users, ShoppingBag, MessageSquare, Settings, User, Layers, Package, Wrench, ShieldCheck, Truck, CheckCircle, FolderOpen } from 'lucide-vue-next';
 import { useAuthStore } from '@/stores/auth';
 
 const route = useRoute();
@@ -34,6 +34,13 @@ const userName = ref(authStore.user?.name || 'User');
 
 const navItems = computed(() => [
   { path: '/dashboard', label: '看板', icon: LayoutDashboard },
+  { path: '/bom', label: 'BOM', icon: Layers },
+  { path: '/inventory', label: '库存', icon: Package },
+  { path: '/production', label: '生产', icon: Wrench },
+  { path: '/quality', label: '质量', icon: ShieldCheck },
+  { path: '/purchases', label: '采购', icon: Truck },
+  { path: '/approvals', label: '审批', icon: CheckCircle },
+  { path: '/documents', label: '文档', icon: FolderOpen },
   { path: '/quote', label: '报价', icon: FileText },
   { path: '/history', label: '历史', icon: History },
   { path: '/customers', label: '客户', icon: Users },
@@ -47,6 +54,7 @@ function isActive(path: string): boolean {
   if (path === '/marketplace' && route.path.startsWith('/marketplace')) return true;
   if (path === '/messages' && route.path.startsWith('/messages')) return true;
   if (path === '/customers' && route.path.startsWith('/customers')) return true;
+  if (path === '/admin' && route.path.startsWith('/admin')) return true;
   return route.path === path;
 }
 </script>

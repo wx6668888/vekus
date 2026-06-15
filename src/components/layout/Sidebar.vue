@@ -171,9 +171,7 @@ function isActive(path: string): boolean {
   margin: 0;
 }
 
-/* Sidebar hidden on both mobile (<768px) and when desktop topnav is active (>=769px) */
-.vk-sidebar {
-  display: none;
-}
+/* Sidebar hidden - using DesktopTopNav instead */
+.vk-sidebar { display: none; }
 
 </style>
