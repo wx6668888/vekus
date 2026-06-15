@@ -25,10 +25,10 @@
         </div>
       </div>
 
-      <div v-if="loading" class="admin-view__loading"><div class="vk-skeleton-row" v-for="i in 4" :key="i"></div></div>
+      <div v-if="loading">加载中... ({{ allItems.length }} 条)</div>
 
-      <div v-else-if="flatList.length === 0 && !loading" style="text-align:center;padding:60px;color:var(--text-muted)">
-        <p style="font-size:18px;margin-bottom:8px">暂无物料数据</p>
+      <div v-else-if="flatList.length === 0" style="text-align:center;padding:60px">
+        <p>暂无物料数据 (API返回 {{ allItems.length }} 条原始数据)</p>
         <Button variant="primary" @click="openCreate(0,0,'组件')">新增第一个物料</Button>
       </div>
 
