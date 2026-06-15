@@ -149,7 +149,10 @@ async function onSend(text: string, file?: File) {
     aiThinking.value = true;
     await fetchMessages();
     try {
-      const response = await askCustomerService(text || '请帮我查看这个文件');
+      // Pass image to AI for vision recognition
+      const imageData = file && file.type.startsWith('image/') ? content : undefined;
+      const question = text || (file ? '请帮我分析这张图片的内容' : '');
+      const response = await askCustomerService(question, imageData);
       await sendMessage({
         conversationId,
         senderId: 0,

@@ -398,11 +398,12 @@ async def scan_drawing(file: UploadFile = File(...)):
 # 鈹€鈹€ AI Customer Service 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
 
 class ChatBody(BaseModel):
-    question: str
+    question: str = ""
+    image: Optional[str] = None  # base64 encoded image
 
 @app.post("/api/ai/customer-service")
 def customer_service(body: ChatBody):
-    """AI-powered customer service using DeepSeek with knowledge base."""
+    """AI-powered customer service using DeepSeek with knowledge base. Supports images."""
     from .knowledge_base import DEEPSEEK_API_KEY, DEEPSEEK_API_BASE, DEEPSEEK_MODEL, SYSTEM_PROMPT
 
     # Try DeepSeek API first
@@ -413,20 +414,30 @@ def customer_service(body: ChatBody):
                 "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
                 "Content-Type": "application/json",
             }
+
+            # Build user message — support multimodal if image is provided
+            if body.image:
+                user_content = [
+                    {"type": "text", "text": body.question or "请分析这张图片"},
+                    {"type": "image_url", "image_url": {"url": body.image}},
+                ]
+            else:
+                user_content = body.question
+
             payload = {
                 "model": DEEPSEEK_MODEL,
                 "messages": [
                     {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user", "content": body.question},
+                    {"role": "user", "content": user_content},
                 ],
-                "max_tokens": 600,
+                "max_tokens": 800,
                 "temperature": 0.7,
             }
             resp = requests.post(
                 f"{DEEPSEEK_API_BASE}/chat/completions",
                 headers=headers,
                 json=payload,
-                timeout=30,
+                timeout=60,
             )
             if resp.status_code == 200:
                 data = resp.json()
@@ -436,7 +447,9 @@ def customer_service(body: ChatBody):
             pass  # Fall through to local KB
 
     # Local fallback
-    return {"answer": f"鎴戞槸Vekus鏅鸿兘鍔╂墜灏廣锛佹偍鍙互闂垜鍏充簬鎶ヤ环娴佺▼銆佹潗鏂欎环鏍笺€佷氦鏄撳箍鍦恒€佸厖鍊肩瓑闂銆傚闇€浜哄伐鏈嶅姟锛岃鎷ㄦ墦400-888-9999銆俓n\n鎮ㄧ殑闂鏄細{body.question}\n\n寤鸿灏濊瘯鍜ㄨ锛歕n鈥?濡備綍涓婁紶鍥剧焊杩涜鎶ヤ环锛焅n鈥?浜ゆ槗骞垮満鎬庝箞鍙戝竷淇℃伅锛焅n鈥?濡備綍缁欏鎴峰彂閫佹姤浠凤紵"}
+    if body.image:
+        return {"answer": "我收到了您的图片，但当前 AI 服务未配置 API Key，暂时无法识别图片内容。如需 AI 识图，请将图纸上传到报价页面进行识别，或联系管理员配置 DeepSeek API Key。"}
+    return {"answer": f"我是Vekus智能助手小V！您可以问我关于报价流程、材料价格、交易广场、充值等问题。如需人工服务，请拨打400-888-9999。\n\n您的问题是：{body.question}\n\n建议尝试咨询：\n1. 如何上传图纸进行报价？\n2. 交易广场怎么发布信息？\n3. 如何给客户发送报价？"}
 
 
 # 鈹€鈹€ Dashboard 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
