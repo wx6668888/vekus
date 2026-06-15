@@ -1490,6 +1490,7 @@ def production_update(order_id: int, data: dict):
         if data.get("status") == "done" and not row.actual_end: row.actual_end = now_str(); row.progress = 100
         row.updated_at = now_str()
         db.commit(); db.refresh(row)
+        _notify(db, f"工单状态: {row.order_no}", f"{row.product_name} → {row.status} (进度{row.progress}%)")
         return serialize_prod(row)
 
 @app.delete("/api/production/{order_id}")
@@ -1573,6 +1574,7 @@ def purchase_create(data: dict):
             status="draft",order_date=data.get("orderDate",""),receive_date=data.get("receiveDate",""),
             note=data.get("note",""),created_at=now_str())
         db.add(row); db.commit(); db.refresh(row)
+        _notify(db, f"采购订单 {row.order_no}", f"{row.item_name} x{row.quantity} 供应商:{row.supplier_name}")
         return serialize_po(row)
 
 @app.put("/api/purchases/{po_id}")
@@ -1594,6 +1596,10 @@ def purchase_update(po_id: int, data: dict):
                         after_qty=inv.quantity,related_no=row.order_no,operator="",note=f"采购收货: {row.order_no}",created_at=now_str()))
                     db2.commit()
         db.commit(); db.refresh(row)
+        if data.get("status") == "received":
+            _notify(db, f"采购收货: {row.order_no}", f"{row.item_name} x{row.quantity} 已入库")
+        else:
+            _notify(db, f"采购状态: {row.order_no}", f"{row.item_name} → {row.status}")
         return serialize_po(row)
 
 @app.delete("/api/purchases/{po_id}")
@@ -1635,6 +1641,7 @@ def quality_create(data: dict):
             check_date=data.get("checkDate",""),defect_desc=data.get("defectDesc",""),
             handle=data.get("handle",""),note=data.get("note",""),created_at=now_str())
         db.add(row); db.commit(); db.refresh(row)
+        _notify(db, f"质量检验 {row.check_no}", f"{row.item_name} 结果:{row.result} 合格{row.pass_qty}/不良{row.fail_qty}")
         return serialize_qc(row)
 
 @app.put("/api/quality/{qc_id}")
@@ -1686,6 +1693,7 @@ def approval_create(data: dict):
             status="pending",comment=data.get("comment",""),created_at=now_str(),updated_at=now_str())
         db.add(row); db.commit(); db.refresh(row)
         _audit(db, data.get("applicant",""),"approve","approval",str(row.id),f"提交审批: {row.entity_title}")
+        _notify(db, f"新审批: {row.entity_title}", f"申请人:{row.applicant} 审批人:{row.approver}")
         return serialize_approval(row)
 
 @app.put("/api/approvals/{ap_id}")
@@ -1701,6 +1709,7 @@ def approval_update(ap_id: int, data: dict):
         if old_status != row.status:
             _audit(db, row.approver,"approve","approval",str(row.id),
                    f"{'通过' if row.status=='approved' else '驳回'}审批: {row.entity_title}")
+            _notify(db, f"审批{'通过' if row.status=='approved' else '驳回'}: {row.entity_title}")
         return serialize_approval(row)
 
 
