@@ -242,8 +242,14 @@ function autoExpand() {
 }
 
 onMounted(async () => {
-  const res = await api.get<BomNode[]>('/bom/tree');
-  if (res.data) allItems.value = res.data;
+  try {
+    const res = await api.get<BomNode[]>('/bom/tree');
+    if (res.data && Array.isArray(res.data)) {
+      allItems.value = res.data;
+    }
+  } catch (e) {
+    console.error('BOM load error:', e);
+  }
   loading.value = false;
   autoExpand();
 });
