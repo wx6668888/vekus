@@ -19,7 +19,7 @@
 
       <div v-else class="msg-page__conv-list">
         <div
-          v-for="conv in conversations"
+          v-for="conv in sortedConversations"
           :key="conv.id"
           :class="['msg-page__conv-item', { active: activeConv?.id === conv.id }]"
           @click="selectConv(conv)"
@@ -125,7 +125,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick, onMounted } from 'vue';
+import { ref, computed, nextTick, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { MessageCircle, MessageSquare, Headphones, Bell, ShoppingBag, Sparkles } from 'lucide-vue-next';
 import MobileNav from '@/components/layout/MobileNav.vue';
@@ -147,6 +147,20 @@ const aiThinking = ref(false);
 const msgContainer = ref<HTMLDivElement | null>(null);
 const previewImage = ref('');
 const myId = ref(1);
+
+// Sort: customer_service + system always on top
+const sortedConversations = computed(() => {
+  const pinned: Conversation[] = [];
+  const normal: Conversation[] = [];
+  for (const c of conversations.value) {
+    if (c.type === 'customer_service' || c.type === 'system') {
+      pinned.push(c);
+    } else {
+      normal.push(c);
+    }
+  }
+  return [...pinned, ...normal];
+});
 
 // Product info from marketplace "contact seller"
 const productInfo = ref<{ title: string; price: number; image?: string; listingId?: string } | null>(null);
