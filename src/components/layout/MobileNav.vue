@@ -25,13 +25,13 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useRoute } from 'vue-router';
-import { FileText, History, ShoppingBag, MessageSquare, User } from 'lucide-vue-next';
+import { LayoutDashboard, FileText, ShoppingBag, MessageSquare, User } from 'lucide-vue-next';
 
 const route = useRoute();
 
 const navItems = computed(() => [
+  { path: '/dashboard', label: '看板', icon: LayoutDashboard },
   { path: '/quote', label: '报价', icon: FileText },
-  { path: '/history', label: '历史', icon: History },
   { path: '/marketplace', label: '交易', icon: ShoppingBag },
   { path: '/messages', label: '消息', icon: MessageSquare },
   { path: '/me', label: '我的', icon: User },
