@@ -15,6 +15,33 @@
           <FileText :size="17" /><span>报价</span>
         </router-link>
 
+        <!-- 业务 -->
+        <div class="vk-dd" @mouseenter="open='business'" @mouseleave="open=''">
+          <button :class="['vk-topnav__item', { active: isMenuActive('business') }]">
+            <Briefcase :size="17" /><span>业务</span><ChevronDown :size="11" class="vk-dd-arrow" />
+          </button>
+          <Transition name="vk-dd-fade">
+            <div v-if="open==='business'" class="vk-dd__panel">
+              <div class="vk-dd__split">
+                <div class="vk-dd__left">
+                  <div class="vk-dd__grid vk-dd__grid--3col">
+                    <router-link v-for="m in businessBig" :key="m.path" :to="m.path" class="vk-dd__card" @click="open=''">
+                      <component :is="m.icon" class="vk-dd__card-icon" :size="24" />
+                      <span class="vk-dd__card-title">{{ m.label }}</span>
+                    </router-link>
+                  </div>
+                </div>
+                <div class="vk-dd__right">
+                  <router-link v-for="m in businessSmall" :key="m.path" :to="m.path" class="vk-dd__right-link" @click="open=''">
+                    <component :is="m.icon" :size="15" /><span>{{ m.label }}</span>
+                    <ChevronRight :size="13" class="vk-dd__right-arrow" />
+                  </router-link>
+                </div>
+              </div>
+            </div>
+          </Transition>
+        </div>
+
         <!-- 生产 -->
         <div class="vk-dd" @mouseenter="open='production'" @mouseleave="open=''">
           <button :class="['vk-topnav__item', { active: isMenuActive('production') }]">
@@ -42,33 +69,6 @@
           </Transition>
         </div>
 
-        <!-- 业务 -->
-        <div class="vk-dd" @mouseenter="open='business'" @mouseleave="open=''">
-          <button :class="['vk-topnav__item', { active: isMenuActive('business') }]">
-            <FileText :size="17" /><span>业务</span><ChevronDown :size="11" class="vk-dd-arrow" />
-          </button>
-          <Transition name="vk-dd-fade">
-            <div v-if="open==='business'" class="vk-dd__panel">
-              <div class="vk-dd__split">
-                <div class="vk-dd__left">
-                  <div class="vk-dd__grid vk-dd__grid--3col">
-                    <router-link v-for="m in businessBig" :key="m.path" :to="m.path" class="vk-dd__card" @click="open=''">
-                      <component :is="m.icon" class="vk-dd__card-icon" :size="24" />
-                      <span class="vk-dd__card-title">{{ m.label }}</span>
-                    </router-link>
-                  </div>
-                </div>
-                <div class="vk-dd__right">
-                  <router-link v-for="m in businessSmall" :key="m.path" :to="m.path" class="vk-dd__right-link" @click="open=''">
-                    <component :is="m.icon" :size="15" /><span>{{ m.label }}</span>
-                    <ChevronRight :size="13" class="vk-dd__right-arrow" />
-                  </router-link>
-                </div>
-              </div>
-            </div>
-          </Transition>
-        </div>
-
         <router-link to="/messages" class="vk-topnav__item" :class="{ active: isActive('/messages') }">
           <MessageSquare :size="17" /><span>消息</span>
         </router-link>
@@ -85,7 +85,7 @@
 import { ref } from 'vue';
 import { useRoute } from 'vue-router';
 import {
-  LayoutDashboard, FileText, History, Users, ShoppingBag,
+  LayoutDashboard, FileText, History, Users, ShoppingBag, Briefcase,
   MessageSquare, Settings, Layers, Package, Wrench, ShieldCheck, Truck, CheckCircle, FolderOpen, ChevronDown, ChevronRight,
 } from 'lucide-vue-next';
 import { useAuthStore } from '@/stores/auth';
