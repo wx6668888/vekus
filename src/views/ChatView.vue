@@ -87,27 +87,37 @@ const previewImage = ref('');
 let pollTimer: ReturnType<typeof setInterval> | null = null;
 
 onMounted(async () => {
-  // Find conversation type
-  const convs = await getConversations(myId);
+  // Find conversation type and load messages in parallel
+  const [convs, msgs] = await Promise.all([
+    getConversations(myId),
+    getMessages(conversationId),
+  ]);
   const conv = convs.find(c => c.id === conversationId);
   if (conv) {
     convTitle.value = conv.title;
     convType.value = conv.type;
   }
-  await fetchMessages();
-  await markRead(conversationId);
-  pollTimer = setInterval(fetchMessages, 5000);
+  messages.value = msgs;
+  loading.value = false;
+  await nextTick();
+  scrollToBottom();
+  markRead(conversationId); // fire-and-forget
+  pollTimer = setInterval(pollNewMessages, 15000); // 15s poll, not 5s
 });
 
 onUnmounted(() => {
   if (pollTimer) clearInterval(pollTimer);
 });
 
-async function fetchMessages() {
-  messages.value = await getMessages(conversationId);
-  loading.value = false;
-  await nextTick();
-  scrollToBottom();
+async function pollNewMessages() {
+  // Only poll new messages, don't replace entire list to avoid flicker
+  try {
+    const latest = await getMessages(conversationId);
+    if (latest.length > messages.value.length) {
+      messages.value = latest;
+      await nextTick();
+    }
+  } catch { /* ignore poll errors */ }
 }
 
 function scrollToBottom() {
@@ -119,13 +129,11 @@ function scrollToBottom() {
 async function onSend(text: string, file?: File) {
   let content = text;
   let messageType = 'text';
-
-  // Handle file: compress images, then convert to base64
   let compressedBase64: string | undefined;
+
   if (file) {
     if (file.type.startsWith('image/')) {
       messageType = 'image';
-      // Compress image to max 1024px / 512KB for fast transfer
       compressedBase64 = await compressImage(file, 1024, 512 * 1024);
       content = compressedBase64;
     } else {
@@ -135,43 +143,86 @@ async function onSend(text: string, file?: File) {
   if (!content) return;
   inputText.value = '';
 
-  // Send user message
-  await sendMessage({
+  // Optimistic UI: add user message immediately
+  const optimisticMsg: Message = {
+    id: 'temp-' + Date.now(),
+    conversationId,
+    senderId: myId,
+    content,
+    messageType: messageType as any,
+    isRead: true,
+    createdAt: new Date().toISOString(),
+  };
+  messages.value.push(optimisticMsg);
+  await nextTick();
+  scrollToBottom();
+
+  // Send to server (fire and update ID when done)
+  const sendPromise = sendMessage({
     conversationId,
     senderId: myId,
     content,
     messageType,
+  }).then(realMsg => {
+    // Replace optimistic message with real one
+    const idx = messages.value.findIndex(m => m.id === optimisticMsg.id);
+    if (idx >= 0) messages.value[idx] = realMsg;
+  }).catch(() => {
+    // Mark failed
+    const idx = messages.value.findIndex(m => m.id === optimisticMsg.id);
+    if (idx >= 0) messages.value[idx] = { ...messages.value[idx], content: messages.value[idx].content + ' (发送失败)' };
   });
 
-  await fetchMessages();
-
-  // Auto-reply from AI if customer service
+  // If AI customer service, start thinking immediately (don't wait for send)
   if (convType.value === 'customer_service') {
     aiThinking.value = true;
-    await fetchMessages();
+    await nextTick();
+    scrollToBottom();
+
     try {
-      // Pass compressed image to AI for vision recognition
       const imageData = compressedBase64;
       const question = text || (imageData ? '请帮我分析这张图片的内容' : '');
       const response = await askCustomerService(question, imageData);
-      await sendMessage({
+
+      // Add AI reply
+      const aiMsg: Message = {
+        id: 'ai-' + Date.now(),
         conversationId,
         senderId: 0,
         content: response,
         messageType: 'text',
-      });
+        isRead: true,
+        createdAt: new Date().toISOString(),
+      };
+      messages.value.push(aiMsg);
+
+      // Send AI reply to server (don't block)
+      sendMessage({
+        conversationId,
+        senderId: 0,
+        content: response,
+        messageType: 'text',
+      }).catch(() => {});
     } catch {
-      await sendMessage({
+      const errMsg: Message = {
+        id: 'err-' + Date.now(),
         conversationId,
         senderId: 0,
         content: '抱歉，我暂时无法处理您的问题，请稍后再试或拨打客服电话 400-888-9999。',
         messageType: 'text',
-      });
+        isRead: true,
+        createdAt: new Date().toISOString(),
+      };
+      messages.value.push(errMsg);
     } finally {
       aiThinking.value = false;
-      await fetchMessages();
+      await nextTick();
+      scrollToBottom();
     }
   }
+
+  // Ensure send completed
+  await sendPromise;
 }
 
 function formatTime(dateStr: string): string {

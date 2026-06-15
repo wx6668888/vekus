@@ -898,13 +898,28 @@ def unread_count(user_id: int = 0):
 
 
 @app.get("/api/messages/conversations/{conversation_id}")
-def get_messages(conversation_id: int):
+def get_messages(conversation_id: int, limit: int = 100):
     with SessionLocal() as db:
-        rows = db.scalars(
-            select(Message)
-            .where(Message.conversation_id == conversation_id)
-            .order_by(Message.id.asc())
-        ).all()
+        # Count total messages
+        from sqlalchemy import func
+        total = db.scalar(
+            select(func.count()).select_from(Message).where(Message.conversation_id == conversation_id)
+        )
+        # Only fetch the last N messages
+        if total and total > limit:
+            rows = db.scalars(
+                select(Message)
+                .where(Message.conversation_id == conversation_id)
+                .order_by(Message.id.desc())
+                .limit(limit)
+            ).all()
+            rows = list(reversed(rows))  # Back to ascending
+        else:
+            rows = db.scalars(
+                select(Message)
+                .where(Message.conversation_id == conversation_id)
+                .order_by(Message.id.asc())
+            ).all()
         return [serialize_message(r) for r in rows]
 
 
