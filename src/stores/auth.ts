@@ -34,6 +34,7 @@ export const useAuthStore = defineStore('auth', {
     setUser(user: User) {
       this.user = user;
       this.isAuthenticated = true;
+      localStorage.setItem('vekus_user_role', user.role);
     },
     setToken(token: string) {
       this.token = token;
@@ -45,6 +46,7 @@ export const useAuthStore = defineStore('auth', {
       this.token = null;
       this.isAuthenticated = false;
       localStorage.removeItem('vekus_auth_token');
+      localStorage.removeItem('vekus_user_role');
     },
   },
 });

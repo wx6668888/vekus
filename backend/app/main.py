@@ -318,6 +318,68 @@ def boss_sales(boss_id: int = 0):
         users = db.scalars(select(User).where(User.role == "sales")).all()
         return [serialize_user(u) for u in users]
 
+
+# ═══════════════════ Admin: User Management ═══════════════════
+
+@app.get("/api/admin/users")
+def admin_list_users():
+    with SessionLocal() as db:
+        rows = db.scalars(select(User).order_by(User.id.asc())).all()
+        return [serialize_user(r) for r in rows]
+
+
+class AdminUserBody(BaseModel):
+    username: str = ""
+    name: str = ""
+    phone: str = ""
+    password: str = "123456"
+    role: str = "sales"
+    factory_name: str = ""
+
+
+@app.post("/api/admin/users")
+def admin_create_user(body: AdminUserBody):
+    with SessionLocal() as db:
+        row = User(
+            username=body.username or body.phone,
+            password=body.password,
+            name=body.name,
+            phone=body.phone,
+            role=body.role,
+            factory_name=body.factory_name or "Vekus",
+        )
+        db.add(row)
+        db.commit()
+        db.refresh(row)
+        return serialize_user(row)
+
+
+@app.put("/api/admin/users/{user_id}")
+def admin_update_user(user_id: int, data: dict):
+    with SessionLocal() as db:
+        row = db.get(User, user_id)
+        if not row:
+            raise HTTPException(404, "User not found")
+        for field in ["name", "phone", "role", "factory_name"]:
+            if field in data:
+                setattr(row, field, data[field])
+        if "password" in data and data["password"]:
+            row.password = data["password"]
+        db.commit()
+        db.refresh(row)
+        return serialize_user(row)
+
+
+@app.delete("/api/admin/users/{user_id}")
+def admin_delete_user(user_id: int):
+    with SessionLocal() as db:
+        row = db.get(User, user_id)
+        if not row:
+            raise HTTPException(404, "User not found")
+        db.delete(row)
+        db.commit()
+        return {"ok": True}
+
 @app.get("/api/profile")
 def profile():
     return {

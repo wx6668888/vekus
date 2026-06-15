@@ -26,6 +26,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/customers/:id', component: () => import('@/views/CustomerDetailView.vue') },
   { path: '/points', component: () => import('@/views/PointsTransactionView.vue') },
   { path: '/boss/sales', component: () => import('@/views/BossSalesView.vue') },
+  { path: '/admin/users', component: () => import('@/views/AdminUsersView.vue') },
 ];
 
 const router = createRouter({
@@ -35,11 +36,16 @@ const router = createRouter({
 
 router.beforeEach((to) => {
   const token = localStorage.getItem('vekus_auth_token');
+  const userRole = localStorage.getItem('vekus_user_role');
   const publicPaths = ['/login', '/register', '/share'];
   if (!token && !publicPaths.some(p => to.path.startsWith(p)) && !to.meta?.public) {
     return '/login';
   }
   if (token && (to.path === '/login' || to.path === '/register')) {
+    return '/quote';
+  }
+  // Admin pages: boss only
+  if (to.path.startsWith('/admin') && userRole !== 'boss') {
     return '/quote';
   }
 });
