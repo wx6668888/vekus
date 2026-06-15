@@ -1229,6 +1229,49 @@ def qichacha_search(searchKey: str = "", pageIndex: str = "1"):
         return {"ok": False, "message": str(e)[:200], "results": []}
 
 
+# ═══════════════════ Qichacha Risk Scan ═══════════════════
+
+@app.get("/api/qichacha/risk-scan")
+def qichacha_risk_scan(searchKey: str = "", customerId: int = 0):
+    if not searchKey:
+        raise HTTPException(400, "searchKey is required")
+
+    # Deduct 20 points
+    if customerId > 0:
+        with SessionLocal() as db:
+            now = now_str()
+            txn = PointsTransaction(
+                user_id=1,  # logged-in user
+                amount=-20,
+                type="deduct",
+                description=f"客户风险排查: {searchKey}",
+                related_id=str(customerId),
+                created_at=now,
+            )
+            db.add(txn)
+            db.commit()
+
+    try:
+        import requests
+        timespan = str(int(time_module.time()))
+        token_raw = QICHACHA_KEY + timespan + QICHACHA_SECRET
+        token = hashlib.md5(token_raw.encode()).hexdigest().upper()
+
+        headers = {"Token": token, "Timespan": timespan}
+        params = {"key": QICHACHA_KEY, "searchKey": searchKey}
+        resp = requests.get(
+            "https://api.qichacha.com/RiskControl/Scan",
+            headers=headers, params=params, timeout=30,
+        )
+        data = resp.json()
+        if data.get("Status") == "200" and data.get("Result", {}).get("VerifyResult") == 1:
+            return {"ok": True, "data": data["Result"]["Data"]}
+        else:
+            return {"ok": False, "message": data.get("Message", "未找到风险数据"), "data": None}
+    except Exception as e:
+        return {"ok": False, "message": str(e)[:200], "data": None}
+
+
 @app.get("/api/health")
 def health():
     return {"status": "ok", "service": "vekus-api", "version": "0.2.0"}
