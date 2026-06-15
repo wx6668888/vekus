@@ -472,10 +472,42 @@ class ChatBody(BaseModel):
     question: str = ""
     image: Optional[str] = None  # base64 encoded image
 
+def _get_db_context() -> str:
+    """Build live DB context for AI to answer data questions."""
+    ctx = ["\n\n=== 用户当前数据库状态 ==="]
+    try:
+        with SessionLocal() as db:
+            inv = db.scalars(select(InventoryItem).order_by(InventoryItem.id)).all()
+            if inv:
+                ctx.append("--- 库存 ---")
+                for i in inv[:15]:
+                    warn = " (紧缺!)" if i.quantity <= i.safety_stock and i.safety_stock > 0 else ""
+                    ctx.append(f"{i.name}({i.spec or ''}) 库存:{i.quantity}{i.unit} 安全:{i.safety_stock}{warn}")
+            bom = db.scalars(select(BomItem).where(BomItem.level==0).order_by(BomItem.id)).all()
+            if bom:
+                ctx.append("--- 产品BOM ---")
+                for b in bom[:8]:
+                    ctx.append(f"{b.name} 材质:{b.material} 编码:{b.code}")
+            quotes = db.scalars(select(Quote).order_by(Quote.id.desc()).limit(5)).all()
+            if quotes:
+                ctx.append("--- 最近报价 ---")
+                for q in quotes:
+                    ctx.append(f"{q.quote_no} {q.customer_name} {q.material} {q.thickness}mm x{q.quantity}件 {q.total_price}元 [{q.status}]")
+            prods = db.scalars(select(ProductionOrder).order_by(ProductionOrder.id.desc()).limit(5)).all()
+            if prods:
+                ctx.append("--- 生产工单 ---")
+                for p in prods:
+                    ctx.append(f"{p.order_no} {p.product_name} x{p.quantity} 进度:{p.progress}% [{p.status}]")
+    except: pass
+    return "\n".join(ctx)
+
+
 @app.post("/api/ai/customer-service")
 def customer_service(body: ChatBody):
-    """AI-powered customer service with knowledge base. Supports images via vision model."""
+    """AI-powered customer service with live DB context + vision support."""
     from .knowledge_base import DEEPSEEK_API_KEY, DEEPSEEK_API_BASE, DEEPSEEK_MODEL, SYSTEM_PROMPT
+
+    full_system = SYSTEM_PROMPT + _get_db_context()
     import traceback
 
     if DEEPSEEK_API_KEY:
@@ -505,7 +537,7 @@ def customer_service(body: ChatBody):
             payload = {
                 "model": model,
                 "messages": [
-                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "system", "content": full_system},
                     {"role": "user", "content": user_content},
                 ],
                 "max_tokens": max_tokens,
@@ -704,6 +736,7 @@ def create_quote(body: SaveQuoteBody):
         db.add(row)
         db.commit()
         db.refresh(row)
+        _notify(db, f"新报价 {row.quote_no}", f"客户:{row.customer_name} 材料:{row.material} 数量:{row.quantity}")
         return serialize_quote(row)
 
 
@@ -1391,6 +1424,8 @@ def inventory_transact(item_id: int, data: dict):
             after_qty=row.quantity,related_no=data.get("relatedNo",""),
             operator=data.get("operator",""),note=data.get("note",""),created_at=now_str()))
         db.commit(); db.refresh(row)
+        act = "入库" if t == "in" else "出库"
+        _notify(db, f"库存{act}: {row.name}", f"{act}{qty}{row.unit}, 当前库存{row.quantity}{row.unit}")
         return serialize_inv(row)
 
 @app.get("/api/inventory/{item_id}/logs")
@@ -1672,6 +1707,22 @@ def approval_update(ap_id: int, data: dict):
 # ═══════════════════ Audit Logs ═══════════════════
 
 from .models import AuditLog
+
+def _notify(db, title: str, content: str = "", msg_type: str = "system"):
+    """Create a system notification message for all users."""
+    convs = db.scalars(select(Conversation).where(Conversation.type == "system")).all()
+    if not convs:
+        conv = Conversation(type="system", title="系统通知", participants_json="[]",
+                           last_message=title, last_message_at=now_str(), created_at=now_str())
+        db.add(conv); db.flush()
+        conv_id = conv.id
+    else:
+        conv = convs[0]; conv_id = conv.id
+        conv.last_message = title; conv.last_message_at = now_str()
+    db.add(Message(conversation_id=conv_id, sender_id=0, content=content or title,
+                   message_type=msg_type, is_read=0, created_at=now_str()))
+    db.commit()
+
 
 def _audit(db, user_name: str, action: str, target_type: str, target_id: str, detail: str):
     db.add(AuditLog(user_name=user_name,action=action,target_type=target_type,
