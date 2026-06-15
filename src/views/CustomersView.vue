@@ -7,6 +7,9 @@
         description="维护客户资料、跟进状态、标签和负责人"
       >
         <template #actions>
+          <Button variant="secondary" size="sm" @click="exportExcel" class="mr-2">
+            <Download :size="14" class="mr-1" /> 导出
+          </Button>
           <Button variant="primary" @click="showAddDialog = true">新增客户</Button>
         </template>
       </TopBar>
@@ -158,6 +161,8 @@ import Card from '@/components/base/Card.vue';
 import Badge from '@/components/base/Badge.vue';
 import SelectMenu from '@/components/base/SelectMenu.vue';
 import { api } from '@/api';
+import { Download } from 'lucide-vue-next';
+import * as XLSX from 'xlsx';
 
 interface CustomerItem {
   id: string;
@@ -278,6 +283,18 @@ const filteredCustomers = computed(() => {
 function getTierVariant(tier: string) {
   const variants: Record<string, any> = { A: 'success', B: 'info', C: 'default' };
   return variants[tier] || 'default';
+}
+
+function exportExcel() {
+  const data = customers.value.map(c => ({
+    '客户名称': c.name, '联系人': c.contactName, '电话': c.phone,
+    '等级': c.tier, '标签': (c.tags || []).join(','),
+    '成交状态': c.dealStatus === 'won' ? '已成交' : '未成交',
+  }));
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '客户列表');
+  XLSX.writeFile(wb, '客户列表.xlsx');
 }
 
 async function addCustomer() {

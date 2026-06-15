@@ -49,13 +49,14 @@
         </Card>
 
         <div class="quote-result-view__actions">
+          <Button variant="secondary" size="lg" @click="downloadPdf">
+            <FileDown :size="18" class="mr-2" /> 导出 PDF
+          </Button>
           <Button variant="secondary" size="lg" @click="copyLink">
-            <Share :size="18" class="mr-2" />
-            复制链接
+            <Share :size="18" class="mr-2" /> 复制链接
           </Button>
           <Button variant="primary" size="lg" @click="contactSales">
-            <Phone :size="18" class="mr-2" />
-            联系业务员
+            <Phone :size="18" class="mr-2" /> 联系业务员
           </Button>
         </div>
 
@@ -76,7 +77,9 @@ import type { RecognizedResult, QuoteBreakdown } from '@/api/quote';
 import PriceDisplay from '@/components/data/PriceDisplay.vue';
 import Card from '@/components/base/Card.vue';
 import Button from '@/components/base/Button.vue';
-import { Share, Phone } from 'lucide-vue-next';
+import { Share, Phone, FileDown } from 'lucide-vue-next';
+import pdfMake from 'pdfmake/build/pdfmake';
+import pdfFonts from 'pdfmake/build/vfs_fonts';
 
 const route = useRoute();
 const loading = ref(true);
@@ -141,6 +144,26 @@ onMounted(async () => {
     loading.value = false;
   }
 });
+
+function downloadPdf() {
+  pdfMake.vfs = pdfFonts.pdfMake ? pdfFonts.pdfMake.vfs : pdfFonts;
+  const doc = pdfMake.createPdf({
+    content: [
+      { text: 'Vekus 智能报价单', style: 'header' },
+      { text: `报价单号: ${quoteNo}`, margin: [0,4,0,4] },
+      { text: `客户: ${customerName}`, margin: [0,0,0,4] },
+      { text: `材料: ${material} / ${thickness}mm`, margin: [0,0,0,2] },
+      { text: `数量: ${quantity} 件 · 表面处理: ${surface}`, margin: [0,0,0,2] },
+      { text: `交期: ${deliveryDays} 天`, margin: [0,0,0,12] },
+      { text: `报价总价: ¥${new Intl.NumberFormat('zh-CN').format(totalPrice.value)}`, style: 'price' },
+    ],
+    styles: {
+      header: { fontSize: 22, bold: true, margin: [0,0,0,8] },
+      price: { fontSize: 28, bold: true, color: '#F97316', margin: [0,8,0,0] },
+    }
+  });
+  doc.download(`报价单_${quoteNo}.pdf`);
+}
 
 function copyLink() {
   const url = window.location.href;
