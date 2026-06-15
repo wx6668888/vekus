@@ -1,7 +1,9 @@
+import hashlib
 import json
 import random
 import string
 import tempfile
+import time as time_module
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -163,6 +165,10 @@ def serialize_quote(row: Quote) -> dict:
 
 
 def serialize_customer(row: Customer) -> dict:
+    ext = {}
+    if row.ext_info:
+        try: ext = json.loads(row.ext_info)
+        except: pass
     return {
         "id": str(row.id), "code": row.code, "name": row.name,
         "contactName": row.contact_name, "phone": row.phone,
@@ -171,6 +177,7 @@ def serialize_customer(row: Customer) -> dict:
         "tags": row.tags.split(",") if row.tags else [],
         "status": row.status, "assignedSales": row.assigned_sales,
         "createdAt": row.created_at,
+        "extInfo": ext,
     }
 
 
@@ -629,6 +636,7 @@ def create_customer(data: dict):
             tags=",".join(data.get("tags", [])),
             status=data.get("status", "active"),
             assigned_sales=data.get("assignedSales", ""),
+            ext_info=json.dumps(data.get("extInfo", {}), ensure_ascii=False),
             code=data.get("code", f"C{random.randint(1000,9999)}"),
             created_at=now_str(),
         )
@@ -1175,6 +1183,51 @@ def deduct_points(data: dict):
 
 
 # 鈹€鈹€ Health 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+
+# ═══════════════════ Qichacha Company Search ═══════════════════
+
+QICHACHA_KEY = "ed900f67edbb442597ddee5df1f5b308"
+QICHACHA_SECRET = "ED9FBF5D7A713C5A9C69ED9A026B42B3"
+
+@app.get("/api/qichacha/search")
+def qichacha_search(searchKey: str = "", pageIndex: str = "1"):
+    if not searchKey:
+        raise HTTPException(400, "searchKey is required")
+    try:
+        import requests
+        timespan = str(int(time_module.time()))
+        token_raw = QICHACHA_KEY + timespan + QICHACHA_SECRET
+        token = hashlib.md5(token_raw.encode()).hexdigest().upper()
+
+        headers = {
+            "Token": token,
+            "Timespan": timespan,
+        }
+        params = {
+            "key": QICHACHA_KEY,
+            "searchKey": searchKey,
+            "pageIndex": pageIndex,
+        }
+        resp = requests.get(
+            "https://api.qichacha.com/FuzzySearch/GetList",
+            headers=headers,
+            params=params,
+            timeout=15,
+        )
+        data = resp.json()
+        if data.get("Status") == "200":
+            return {
+                "ok": True,
+                "total": data["Paging"]["TotalRecords"],
+                "pageSize": data["Paging"]["PageSize"],
+                "pageIndex": int(pageIndex),
+                "results": data.get("Result", []),
+            }
+        else:
+            return {"ok": False, "message": data.get("Message", "查询失败"), "results": []}
+    except Exception as e:
+        return {"ok": False, "message": str(e)[:200], "results": []}
+
 
 @app.get("/api/health")
 def health():

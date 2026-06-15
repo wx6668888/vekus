@@ -78,16 +78,67 @@
 
     <!-- Add customer dialog -->
     <div v-if="showAddDialog" class="vk-overlay" @click.self="showAddDialog = false">
-      <Card class="vk-dialog">
+      <Card class="vk-dialog vk-dialog--wide">
         <h3 class="vk-dialog__title">新增客户</h3>
+
+        <!-- Company search -->
+        <div class="vk-dialog__search">
+          <div class="vk-dialog__search-row">
+            <Input
+              v-model="companySearch"
+              label="企业名称搜索"
+              placeholder="输入企业名称关键词，自动匹配工商信息..."
+              @update:model-value="onCompanySearch"
+            />
+            <span v-if="searching" class="vk-dialog__search-hint">搜索中...</span>
+          </div>
+
+          <!-- Search results -->
+          <div v-if="companyResults.length > 0" class="vk-dialog__results">
+            <div
+              v-for="r in companyResults"
+              :key="r.KeyNo"
+              class="vk-dialog__result-item"
+              @click="selectCompany(r)"
+            >
+              <div class="vk-dialog__result-main">
+                <span class="vk-dialog__result-name">{{ r.Name }}</span>
+                <span v-if="r.OperName" class="vk-dialog__result-person">{{ r.OperName }}</span>
+              </div>
+              <div class="vk-dialog__result-meta">
+                <span v-if="r.Status" :class="['vk-dialog__result-status', r.Status === '存续' ? 'status-ok' : '']">{{ r.Status }}</span>
+                <span v-if="r.StartDate">成立 {{ r.StartDate }}</span>
+                <span v-if="r.CreditCode" class="vk-font-mono">统一社会信用代码: {{ r.CreditCode }}</span>
+              </div>
+              <div v-if="r.Address" class="vk-dialog__result-addr">{{ r.Address }}</div>
+            </div>
+          </div>
+          <div v-if="companySearched && companyResults.length === 0 && !searching" class="vk-dialog__results-empty">
+            未找到匹配企业
+          </div>
+        </div>
+
         <div class="vk-dialog__form">
-          <Input v-model="newCustomer.name" label="客户名称" placeholder="输入客户名称" />
-          <Input v-model="newCustomer.contactName" label="联系人" placeholder="输入联系人" />
-          <Input v-model="newCustomer.phone" label="电话" placeholder="输入电话" />
+          <div class="vk-dialog__form-row">
+            <Input v-model="newCustomer.name" label="客户名称 *" placeholder="公司/工厂全称" />
+            <Input v-model="newCustomer.contactName" label="联系人" placeholder="姓名" />
+          </div>
+          <div class="vk-dialog__form-row">
+            <Input v-model="newCustomer.phone" label="电话" placeholder="手机号" />
+            <Input v-model="newCustomer.email" label="邮箱" placeholder="选填" />
+          </div>
+          <Input v-model="newCustomer.address" label="地址" placeholder="公司地址" />
+          <div class="vk-dialog__form-row">
+            <div class="post-view__select">
+              <label class="vk-input__label">客户等级</label>
+              <SelectMenu v-model="newCustomer.tier" :options="tierOptions" />
+            </div>
+            <Input v-model="newCustomer.tagsStr" label="标签" placeholder="逗号分隔，如：钣金,长期合作" />
+          </div>
         </div>
         <div class="vk-dialog__actions">
           <Button variant="ghost" @click="showAddDialog = false">取消</Button>
-          <Button variant="primary" @click="addCustomer">保存</Button>
+          <Button variant="primary" :loading="savingCustomer" @click="addCustomer">保存</Button>
         </div>
       </Card>
     </div>
@@ -126,7 +177,45 @@ const selectedCustomer = ref<string | null>(null);
 const customers = ref<CustomerItem[]>([]);
 const loading = ref(true);
 const showAddDialog = ref(false);
-const newCustomer = ref({ name: '', contactName: '', phone: '' });
+const savingCustomer = ref(false);
+const newCustomer = ref({ name: '', contactName: '', phone: '', email: '', address: '', tier: 'B', tagsStr: '' });
+const tierOptions = [
+  { value: 'A', label: 'A级（VIP）' },
+  { value: 'B', label: 'B级（普通）' },
+  { value: 'C', label: 'C级（新客户）' },
+];
+
+// Company search
+const companySearch = ref('');
+const companyResults = ref<any[]>([]);
+const searching = ref(false);
+const companySearched = ref(false);
+const selectedCompany = ref<any>(null);
+let companySearchTimer: ReturnType<typeof setTimeout> | null = null;
+
+function onCompanySearch() {
+  if (companySearchTimer) clearTimeout(companySearchTimer);
+  const kw = companySearch.value.trim();
+  if (!kw) { companyResults.value = []; companySearched.value = false; return; }
+  companySearchTimer = setTimeout(async () => {
+    searching.value = true;
+    companySearched.value = true;
+    try {
+      const res = await api.get<any>(`/qichacha/search?searchKey=${encodeURIComponent(kw)}`);
+      if (res.data?.ok) companyResults.value = res.data.results;
+      else companyResults.value = [];
+    } catch { companyResults.value = []; }
+    searching.value = false;
+  }, 500);
+}
+
+function selectCompany(c: any) {
+  newCustomer.value.name = c.Name || '';
+  newCustomer.value.address = c.Address || '';
+  selectedCompany.value = c;
+  companyResults.value = [];
+  companySearch.value = c.Name || '';
+}
 
 const tiers = [
   { value: 'all', label: '全部' },
@@ -193,12 +282,31 @@ function getTierVariant(tier: string) {
 
 async function addCustomer() {
   if (!newCustomer.value.name) return;
-  const result = await api.post<CustomerItem>('/customers', newCustomer.value);
-  if (result.data) {
-    customers.value.push({ ...result.data, quotes: 0 });
-  }
-  showAddDialog.value = false;
-  newCustomer.value = { name: '', contactName: '', phone: '' };
+  savingCustomer.value = true;
+  try {
+    const tags = newCustomer.value.tagsStr
+      ? newCustomer.value.tagsStr.split(',').map(t => t.trim()).filter(Boolean)
+      : [];
+    const result = await api.post<CustomerItem>('/customers', {
+      name: newCustomer.value.name,
+      contactName: newCustomer.value.contactName,
+      phone: newCustomer.value.phone,
+      email: newCustomer.value.email,
+      address: newCustomer.value.address,
+      tier: newCustomer.value.tier,
+      tags,
+      extInfo: selectedCompany.value || {},
+    });
+    if (result.data) {
+      customers.value.push({ ...result.data, quotes: 0, tags });
+    }
+    showAddDialog.value = false;
+    newCustomer.value = { name: '', contactName: '', phone: '', email: '', address: '', tier: 'B', tagsStr: '' };
+    companySearch.value = '';
+    companyResults.value = [];
+    selectedCompany.value = null;
+  } catch { alert('保存失败'); }
+  finally { savingCustomer.value = false; }
 }
 </script>
 
@@ -382,6 +490,7 @@ async function addCustomer() {
   max-width: 90vw;
   padding: 24px;
 }
+.vk-dialog--wide { width: 560px; }
 
 .vk-dialog__title {
   margin: 0 0 20px;
@@ -395,12 +504,110 @@ async function addCustomer() {
   gap: 12px;
   margin-bottom: 20px;
 }
+.vk-dialog__form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
 
 .vk-dialog__actions {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
 }
+
+/* Company search */
+.vk-dialog__search {
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.vk-dialog__search-row { position: relative; }
+
+.vk-dialog__search-hint {
+  font-size: var(--fz-xs);
+  color: var(--brand);
+  position: absolute;
+  right: 0;
+  top: -2px;
+}
+
+.vk-dialog__results {
+  max-height: 240px;
+  overflow-y: auto;
+  margin-top: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-input);
+}
+
+.vk-dialog__result-item {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.vk-dialog__result-item:last-child { border-bottom: none; }
+.vk-dialog__result-item:hover { background: var(--brand-light); }
+
+.vk-dialog__result-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.vk-dialog__result-name {
+  font-size: var(--fz-body);
+  font-weight: var(--fw-semibold);
+  color: var(--text);
+}
+
+.vk-dialog__result-person {
+  font-size: var(--fz-sm);
+  color: var(--text-muted);
+}
+
+.vk-dialog__result-meta {
+  display: flex;
+  gap: 12px;
+  font-size: var(--fz-xs);
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.vk-dialog__result-status {
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--surface-sunken);
+  font-weight: var(--fw-medium);
+}
+.vk-dialog__result-status.status-ok {
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.vk-dialog__result-addr {
+  font-size: var(--fz-xs);
+  color: var(--text-faint);
+  margin-top: 2px;
+}
+
+.vk-dialog__results-empty {
+  text-align: center;
+  padding: 20px;
+  font-size: var(--fz-sm);
+  color: var(--text-muted);
+}
+
+.vk-input__label {
+  font-size: var(--fz-sm);
+  font-weight: var(--fw-medium);
+  color: var(--text);
+  margin-bottom: 6px;
+  display: block;
+}
+.post-view__select { display: flex; flex-direction: column; gap: 6px; }
 
 @media (max-width: 768px) {
   .customers-view {

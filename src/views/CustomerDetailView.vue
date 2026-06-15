@@ -31,6 +31,24 @@
             <div><span>创建时间</span><strong>{{ customer.createdAt }}</strong></div>
           </div>
         </Card>
+
+        <!-- Enterprise info from Qichacha -->
+        <Card v-if="customer.extInfo?.Name" class="cust-detail__card cust-detail__card--enterprise">
+          <h3 class="cust-detail__section-title">
+            企业工商信息
+            <span class="cust-detail__source">数据来源：企查查</span>
+          </h3>
+          <div class="cust-detail__info-grid">
+            <div><span>企业名称</span><strong>{{ customer.extInfo.Name }}</strong></div>
+            <div v-if="customer.extInfo.OperName"><span>法定代表人</span><strong>{{ customer.extInfo.OperName }}</strong></div>
+            <div v-if="customer.extInfo.StartDate"><span>成立日期</span><strong>{{ customer.extInfo.StartDate }}</strong></div>
+            <div v-if="customer.extInfo.Status"><span>经营状态</span><strong><span :class="customer.extInfo.Status === '存续' ? 'text-success' : ''">{{ customer.extInfo.Status }}</span></strong></div>
+            <div v-if="customer.extInfo.CreditCode"><span>统一社会信用代码</span><strong class="vk-font-mono">{{ customer.extInfo.CreditCode }}</strong></div>
+            <div v-if="customer.extInfo.No"><span>注册号</span><strong class="vk-font-mono">{{ customer.extInfo.No }}</strong></div>
+            <div v-if="customer.extInfo.Address" class="cust-detail__full-width"><span>注册地址</span><strong>{{ customer.extInfo.Address }}</strong></div>
+            <div v-if="customer.extInfo.KeyNo" class="cust-detail__full-width"><span>企查查KeyNo</span><strong class="vk-font-mono">{{ customer.extInfo.KeyNo }}</strong></div>
+          </div>
+        </Card>
         <Card class="cust-detail__card">
           <h3 class="cust-detail__section-title">交易概况</h3>
           <div class="cust-detail__deal-stats">
@@ -170,5 +188,20 @@ onMounted(async () => {
 .cust-detail__drawing-info { flex: 1; }
 .cust-detail__drawing-name { font-size: var(--fz-body); font-weight: var(--fw-medium); color: var(--text); }
 .cust-detail__drawing-meta { font-size: var(--fz-sm); color: var(--text-muted); margin-top: 2px; }
+
+/* Enterprise card */
+.cust-detail__card--enterprise {
+  border-left: 3px solid var(--brand);
+}
+.cust-detail__source {
+  font-size: var(--fz-xs);
+  font-weight: var(--fw-normal);
+  color: var(--text-faint);
+  margin-left: 8px;
+}
+.cust-detail__full-width {
+  grid-column: 1 / -1;
+}
+.text-success { color: var(--success); font-weight: var(--fw-semibold); }
 @media (max-width: 768px) { .cust-detail { grid-template-columns: 1fr; } .cust-detail__main { padding: 16px 16px 100px; } .cust-detail__info-grid { grid-template-columns: 1fr; } }
 </style>

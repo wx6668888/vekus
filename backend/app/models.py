@@ -33,6 +33,7 @@ class Customer(Base):
     tags: Mapped[str] = mapped_column(String(256), nullable=False, default="")
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="active")
     assigned_sales: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    ext_info: Mapped[str] = mapped_column(Text, nullable=False, default="")  # JSON: Qichacha extra info
     created_at: Mapped[str] = mapped_column(String(32), nullable=False, default="")
 
 
