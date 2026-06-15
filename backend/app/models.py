@@ -143,6 +143,28 @@ class PaymentOrder(Base):
     paid_at: Mapped[str] = mapped_column(String(32), nullable=False, default="")
 
 
+class BomItem(Base):
+    """物料/零件"""
+    __tablename__ = "bom_items"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    code: Mapped[str] = mapped_column(String(64), nullable=False, default="")       # 物料编码
+    name: Mapped[str] = mapped_column(String(128), nullable=False)                   # 物料名称
+    spec: Mapped[str] = mapped_column(String(128), nullable=False, default="")       # 规格/型号
+    material: Mapped[str] = mapped_column(String(64), nullable=False, default="")    # 材质
+    unit: Mapped[str] = mapped_column(String(16), nullable=False, default="件")       # 单位
+    unit_weight: Mapped[float] = mapped_column(Float, nullable=False, default=0)     # 单重(kg)
+    price: Mapped[float] = mapped_column(Float, nullable=False, default=0)           # 参考单价
+    category: Mapped[str] = mapped_column(String(32), nullable=False, default="零件") # 零件/组件/原材料
+    parent_id: Mapped[int] = mapped_column(Integer, nullable=False, default=0)       # 父级物料ID(0=顶层)
+    quantity: Mapped[int] = mapped_column(Integer, nullable=False, default=1)         # 组件用量
+    level: Mapped[int] = mapped_column(Integer, nullable=False, default=0)            # 层级(0=成品,1=一级...)
+    sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)       # 排序
+    note: Mapped[str] = mapped_column(Text, nullable=False, default="")               # 备注
+    version: Mapped[str] = mapped_column(String(16), nullable=False, default="1.0")   # 版本
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="active")  # active/inactive
+    created_at: Mapped[str] = mapped_column(String(32), nullable=False, default="")
+
+
 class PointsTransaction(Base):
     __tablename__ = "points_transactions"
 

@@ -1272,6 +1272,78 @@ def qichacha_risk_scan(searchKey: str = "", customerId: int = 0):
         return {"ok": False, "message": str(e)[:200], "data": None}
 
 
+# ═══════════════════ BOM 物料清单 ═══════════════════
+
+from .models import BomItem
+
+def serialize_bom(row: BomItem) -> dict:
+    return {
+        "id": str(row.id), "code": row.code, "name": row.name,
+        "spec": row.spec, "material": row.material, "unit": row.unit,
+        "unitWeight": row.unit_weight, "price": row.price,
+        "category": row.category, "parentId": str(row.parent_id) if row.parent_id else "",
+        "quantity": row.quantity, "level": row.level,
+        "sortOrder": row.sort_order, "note": row.note,
+        "version": row.version, "status": row.status,
+        "createdAt": row.created_at,
+    }
+
+@app.get("/api/bom")
+def bom_list(parent_id: int = 0):
+    with SessionLocal() as db:
+        if parent_id == 0:
+            rows = db.scalars(select(BomItem).where(BomItem.parent_id == 0).order_by(BomItem.sort_order, BomItem.id)).all()
+        else:
+            rows = db.scalars(select(BomItem).where(BomItem.parent_id == parent_id).order_by(BomItem.sort_order, BomItem.id)).all()
+        return [serialize_bom(r) for r in rows]
+
+@app.get("/api/bom/tree")
+def bom_tree():
+    """Return full BOM tree."""
+    with SessionLocal() as db:
+        all_items = db.scalars(select(BomItem).order_by(BomItem.level, BomItem.sort_order, BomItem.id)).all()
+        return [serialize_bom(r) for r in all_items]
+
+@app.post("/api/bom")
+def bom_create(data: dict):
+    with SessionLocal() as db:
+        row = BomItem(
+            code=data.get("code", ""), name=data.get("name", ""),
+            spec=data.get("spec", ""), material=data.get("material", ""),
+            unit=data.get("unit", "件"), unit_weight=float(data.get("unitWeight", 0)),
+            price=float(data.get("price", 0)), category=data.get("category", "零件"),
+            parent_id=int(data.get("parentId", 0)), quantity=int(data.get("quantity", 1)),
+            level=int(data.get("level", 0)), sort_order=int(data.get("sortOrder", 0)),
+            note=data.get("note", ""), version=data.get("version", "1.0"),
+            status=data.get("status", "active"), created_at=now_str(),
+        )
+        db.add(row); db.commit(); db.refresh(row)
+        return serialize_bom(row)
+
+@app.put("/api/bom/{item_id}")
+def bom_update(item_id: int, data: dict):
+    with SessionLocal() as db:
+        row = db.get(BomItem, item_id)
+        if not row: raise HTTPException(404, "Not found")
+        for f in ["code","name","spec","material","unit","category","note","version","status"]:
+            if f in data: setattr(row, f, data[f])
+        for f in ["unitWeight","price","parentId","quantity","level","sortOrder"]:
+            if f in data: setattr(row, f, float(data[f]) if f in ("unitWeight","price") else int(data[f]))
+        db.commit(); db.refresh(row)
+        return serialize_bom(row)
+
+@app.delete("/api/bom/{item_id}")
+def bom_delete(item_id: int):
+    with SessionLocal() as db:
+        row = db.get(BomItem, item_id)
+        if not row: raise HTTPException(404, "Not found")
+        # Also delete children
+        children = db.scalars(select(BomItem).where(BomItem.parent_id == item_id)).all()
+        for c in children: db.delete(c)
+        db.delete(row); db.commit()
+        return {"ok": True}
+
+
 @app.get("/api/health")
 def health():
     return {"status": "ok", "service": "vekus-api", "version": "0.2.0"}
