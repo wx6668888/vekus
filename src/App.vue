@@ -1,5 +1,5 @@
 <template>
-  <DesktopTopNav />
+  <DesktopTopNav v-if="!isAuthPage" />
   <router-view />
   <div class="vk-toast-container">
     <transition-group name="toast">
@@ -16,8 +16,13 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
+import { useRoute } from 'vue-router';
 import DesktopTopNav from '@/components/layout/DesktopTopNav.vue';
 import { toast } from '@/services/toast';
+
+const route = useRoute();
+const isAuthPage = computed(() => ['/login', '/register'].includes(route.path));
 
 const { toasts } = toast;
 
